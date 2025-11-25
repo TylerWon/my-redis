@@ -15,10 +15,10 @@ class HMap {
         uint32_t max_load_factor = 8;
         uint32_t num_keys_to_rehash = 128;
     public: 
-        /**
-         * Initializes a HMap with 8 slots.
-         */
+        /* Initializes a HMap with 8 slots. */
         HMap();
+
+        ~HMap();
 
         /**
          * Inserts the node into the HMap.

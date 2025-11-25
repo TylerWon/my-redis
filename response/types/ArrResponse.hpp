@@ -13,6 +13,8 @@ class ArrResponse : public Response {
     public:
         ArrResponse(std::vector<Response *> elements) : elements(elements), len(elements.size()) {};
 
+        ~ArrResponse();
+
         /**
          * Serialized structure:
          * +----------+-------------+--------------------------+

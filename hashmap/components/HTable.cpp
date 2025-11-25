@@ -12,6 +12,10 @@ HTable::HTable(uint64_t n) {
     mask = n - 1;
 }
 
+HTable::~HTable() {
+    free(table);
+}
+
 void HTable::insert(HNode *node) {
     uint64_t slot = node->hval & mask;
     HNode *head = table[slot];

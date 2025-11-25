@@ -81,6 +81,25 @@ int32_t compare_lookup_pair_to_pair(AVLNode *node1, AVLNode *node2) {
     return res != 0 ? res : pair1->len - pair2->len;
 }
 
+/**
+ * Cleans up (deallocates) the SPairs in the SortedSet by traversing the AVL tree.
+ * 
+ * @param root  Pointer to the root node of the SortedSet's AVL tree.
+ */
+void clean_up_sorted_set(AVLNode *root) {
+    if (root == NULL) {
+        return;
+    }
+
+    clean_up_sorted_set(root->left);
+    clean_up_sorted_set(root->right);
+    spair_del(container_of(root, SPair, tree_node));
+}
+
+SortedSet::~SortedSet() {
+    clean_up_sorted_set(tree.root);
+}
+
 bool SortedSet::insert(double score, const char *name, uint32_t len) {
     SPair *pair = lookup(name, len);
     if (pair != NULL) {

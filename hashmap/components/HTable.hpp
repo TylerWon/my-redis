@@ -13,12 +13,10 @@ class HTable {
         uint64_t num_slots;  
         uint64_t num_keys;
     
-        /**
-         * Initializes a HTable with n slots. 
-         * 
-         * @param n Size of the HTable. Must be a power of 2.
-         */
+        /* Initializes a HTable with n slots. */
         HTable(uint64_t n);
+
+        ~HTable();
 
         /**
          * Inserts the node into the HTable.

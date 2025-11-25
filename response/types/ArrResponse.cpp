@@ -9,6 +9,12 @@
 #include "../../utils/buf_utils.hpp"
 #include "../../utils/log.hpp"
 
+ArrResponse::~ArrResponse() {
+    for (Response *element : elements) {
+        delete element;
+    }
+}
+
 void ArrResponse::serialize(Buffer &buf) {
     buf.append_uint8(ResponseTag::TAG_ARR);
     buf.append_uint32(len);

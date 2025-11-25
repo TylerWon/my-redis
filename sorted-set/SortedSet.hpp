@@ -7,6 +7,8 @@
 /* A collection of (score, name) pairs ordered from low to high */
 class SortedSet {
     public:
+        ~SortedSet();
+        
         /**
          * Inserts a new (score, name) pair into the SortedSet if it doesn't already exist. Otherwise, updates the 
          * existing pair.

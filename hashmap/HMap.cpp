@@ -9,6 +9,15 @@ HMap::HMap() {
     migrate_pos = 0;
 }
 
+HMap::~HMap() {
+    if (newer != NULL) {
+        delete newer;
+    }
+    if (older != NULL) {
+        delete older;
+    }
+}
+
 void HMap::insert(HNode *node) {
     newer->insert(node);
 

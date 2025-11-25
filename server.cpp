@@ -910,6 +910,7 @@ int main() {
     if ((listener = start_server(res)) == -1) {
         fatal("failed to start server");
     }
+    freeaddrinfo(res);
 
     log("started server");
 
