@@ -35,7 +35,6 @@
 #include "utils/log.hpp"
 #include "utils/time_utils.hpp"
 
-const uint32_t LARGE_CONTAINER_SIZE = 1000;
 
 /* Type of Entry */
 enum EntryType {
@@ -265,6 +264,7 @@ void delete_entry(Entry *entry) {
     }
 
     if (entry->type == EntryType::SORTED_SET) {
+        const uint32_t LARGE_CONTAINER_SIZE = 1000;
         if (entry->zset.length() >= LARGE_CONTAINER_SIZE) {
             log("deleting large sorted set, delegating task to worker threads");
             thread_pool.add_task({ &delete_entry_func, (void *) entry });
@@ -903,7 +903,9 @@ void process_timers() {
         handle_close(conn);
     }
 
-    while (!ttl_timers.is_empty()) {
+    const uint32_t MAX_EXPIRATIONS = 1000;
+    uint32_t count = 0;
+    while (!ttl_timers.is_empty() && count < MAX_EXPIRATIONS) {
         MHNode *node = ttl_timers.min();
         TTLTimer *timer = container_of(node, TTLTimer, node);
         if (timer->expiry_time_ms > now_ms) {
@@ -913,6 +915,7 @@ void process_timers() {
         log("key \'%s\' expired", entry->key.data());
         kv_store.remove(&entry->node, are_entries_equal);
         delete_entry(entry);
+        count++;
     }
 }
 
