@@ -27,12 +27,15 @@
 #include "sorted-set/SortedSet.hpp"
 #include "timers/IdleTimer.hpp"
 #include "timers/TTLTimer.hpp"
+#include "thread-pool/ThreadPool.hpp"
 #include "utils/buf_utils.hpp"
 #include "utils/intrusive_data_structure_utils.hpp"
 #include "utils/hash_utils.hpp"
 #include "utils/net_utils.hpp"
 #include "utils/log.hpp"
 #include "utils/time_utils.hpp"
+
+const uint32_t LARGE_CONTAINER_SIZE = 1000;
 
 /* Type of Entry */
 enum EntryType {
@@ -81,6 +84,7 @@ std::vector<Conn *> fd_to_conn; // map of all client connections, indexed by fd
 std::vector<struct pollfd> pollfds; // array of pollfds for poll()
 Queue idle_timers; // idle timers for active connections, timer closest to expiring is at the front of the queue
 MinHeap ttl_timers; // ttl timers for entries in the kv store, timer closest to expiring is at the root of the heap
+ThreadPool thread_pool(4); // pool of worker threads for executing asynchronous tasks
 
 /**
  * Gets the address info for the machine running this program which can be used in bind().
@@ -244,6 +248,11 @@ Response *do_set(const std::string &key, const std::string &value) {
     return new StrResponse("OK");
 }
 
+/* Wrapper function used when adding a Task to the thread pool for deleting a large Entry in the kv store */
+void delete_entry_func(void *arg) {
+    delete (Entry *) arg;
+}
+
 /**
  * Deletes (deallocates) an Entry.
  * 
@@ -253,6 +262,14 @@ void delete_entry(Entry *entry) {
     TTLTimer *timer = &entry->ttl_timer;
     if (timer->expiry_time_ms != 0) {
         ttl_timers.remove(&entry->ttl_timer.node, is_ttl_timer_less);
+    }
+
+    if (entry->type == EntryType::SORTED_SET) {
+        if (entry->zset.length() >= LARGE_CONTAINER_SIZE) {
+            log("deleting large sorted set, delegating task to worker threads");
+            thread_pool.add_task({ &delete_entry_func, (void *) entry });
+            return;
+        }
     }
     
     delete entry;
@@ -272,8 +289,7 @@ Response *do_del(const std::string &key) {
     HNode *node = kv_store.remove(&lookup_entry.node, are_entries_equal);
     
     if (node != NULL) {
-        Entry *entry = container_of(node, Entry, node);
-        delete_entry(entry);
+        delete_entry(container_of(node, Entry, node));
         return new IntResponse(1);
     }
 
