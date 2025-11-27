@@ -9,8 +9,17 @@ class Buffer {
         char *buffer_end;
         char *data_start;
         char *data_end;
+        
+        /* Initializes an n-byte Buffer */
+        void init(uint32_t n);
     public:
+        /* Initializes a 64 KB Buffer */
         Buffer();
+
+        /* Initializes an n-byte Buffer */
+        Buffer(uint32_t n);
+
+        ~Buffer();
 
         /**
          * Appends n bytes from the provided array to the Buffer.
@@ -33,15 +42,16 @@ class Buffer {
         void append_dbl(double data);
 
         /**
-         * Removes n bytes from the front of the Buffer.
+         * Removes n bytes from the front of the Buffer. n can be greater than the number of bytes in the Buffer; this 
+         * justs mean the Buffer will be emptied.
          * 
          * @param n The number of bytes to remove from the front of the Buffer.
          */
         void consume(uint32_t n);
 
-        /* Returns a direct pointer to the memory array used internally by the Buffer to store its own elements */
+        /* Returns a direct pointer to the start of the data in the Buffer */
         char *data();
 
-        /* Returns the number of elements in the Buffer */
+        /* Returns the number of bytes in the Buffer */
         uint32_t size();
 };

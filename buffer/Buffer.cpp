@@ -1,14 +1,20 @@
 #include <cstdlib>
 #include <cstring>
+#include <algorithm>
 
 #include "../utils/log.hpp"
 #include "Buffer.hpp"
 
 Buffer::Buffer() {
-    buffer_start =  (char *) malloc(64 * 1024); // 64 KB
-    buffer_end = buffer_start + 64 * 1024;
-    data_start = buffer_start;
-    data_end = data_start;
+    init(64 * 1024);
+}
+
+Buffer::Buffer(uint32_t n) {
+    init(n);
+}
+
+Buffer::~Buffer() {
+    free(buffer_start);
 }
 
 void Buffer::append(const char *arr, uint32_t n) {
@@ -55,11 +61,11 @@ void Buffer::append_dbl(double data) {
 }
 
 void Buffer::consume(uint32_t n) {
-    if (data_start == data_end) {
-        log("nothing to remove");
+    if (size() == 0) {
+        log("nothing to remove from Buffer");
         return;
     }
-    data_start += n;
+    data_start += std::min(n, size());
 }
 
 char *Buffer::data() {
@@ -68,4 +74,11 @@ char *Buffer::data() {
 
 uint32_t Buffer::size() {
     return data_end - data_start;
+}
+
+void Buffer::init(uint32_t n) {
+    buffer_start = (char *) malloc(n);
+    buffer_end = buffer_start + n;
+    data_start = buffer_start;
+    data_end = data_start;
 }
