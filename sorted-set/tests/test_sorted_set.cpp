@@ -11,7 +11,7 @@ void test_insert_pair() {
 
     SPair *pair = set.lookup("tyler", 5);
     assert(pair->len == 5);
-    assert(strcmp(pair->name, "tyler") == 0);
+    assert(strncmp(pair->name, "tyler", pair->len) == 0);
     assert(pair->score == 10);
 }
 
@@ -24,7 +24,7 @@ void test_insert_existing_pair() {
 
     SPair *pair = set.lookup("tyler", 5);
     assert(pair->len == 5);
-    assert(strcmp(pair->name, "tyler") == 0);
+    assert(strncmp(pair->name, "tyler", pair->len) == 0);
     assert(pair->score == 20);
 }
 
@@ -50,7 +50,7 @@ void test_lookup_pair() {
 
     SPair *pair = set.lookup("tyler", 5);
     assert(pair->len == 5);
-    assert(strcmp(pair->name, "tyler") == 0);
+    assert(strncmp(pair->name, "tyler", pair->len) == 0);
     assert(pair->score == 10);
 }
 
@@ -87,9 +87,9 @@ void test_find_all_ge_pairs_with_higher_score_found() {
     std::vector<SPair *> results = set.find_all_ge(5, "adam", 4);
     assert(results.size() == 2);
     assert(results[0]->score == 10);
-    assert(strcmp(results[0]->name, "tyler") == 0);
+    assert(strncmp(results[0]->name, "tyler", results[0]->len) == 0);
     assert(results[1]->score == 11);
-    assert(strcmp(results[1]->name, "jeff") == 0);
+    assert(strncmp(results[1]->name, "jeff", results[1]->len) == 0);
 }
 
 void test_find_all_ge_pairs_with_higher_name_found() {
@@ -101,9 +101,9 @@ void test_find_all_ge_pairs_with_higher_name_found() {
     std::vector<SPair *> results = set.find_all_ge(10, "mark", 4);
     assert(results.size() == 2);
     assert(results[0]->score == 10);
-    assert(strcmp(results[0]->name, "tyler") == 0);
+    assert(strncmp(results[0]->name, "tyler", results[0]->len) == 0);
     assert(results[1]->score == 10);
-    assert(strcmp(results[1]->name, "zed") == 0);
+    assert(strncmp(results[1]->name, "zed", results[1]->len) == 0);
 }
 
 void test_find_all_ge_given_pair_in_set() {
@@ -115,9 +115,9 @@ void test_find_all_ge_given_pair_in_set() {
     std::vector<SPair *> results = set.find_all_ge(10, "tyler", 5);
     assert(results.size() == 2);
     assert(results[0]->score == 10);
-    assert(strcmp(results[0]->name, "tyler") == 0);
+    assert(strncmp(results[0]->name, "tyler", results[0]->len) == 0);
     assert(results[1]->score == 11);
-    assert(strcmp(results[1]->name, "jeff") == 0);
+    assert(strncmp(results[1]->name, "jeff", results[1]->len) == 0);
 }
 
 void test_find_all_ge_with_offset() {
@@ -129,7 +129,7 @@ void test_find_all_ge_with_offset() {
     std::vector<SPair *> results = set.find_all_ge(5, "adam", 4, 1);
     assert(results.size() == 1);
     assert(results[0]->score == 11);
-    assert(strcmp(results[0]->name, "jeff") == 0);
+    assert(strncmp(results[0]->name, "jeff", results[0]->len) == 0);
 }
 
 void test_find_all_ge_offset_skips_all_results() {
@@ -151,7 +151,7 @@ void test_find_all_ge_under_limit() {
     std::vector<SPair *> results = set.find_all_ge(10, "zed", 3, 0, 2);
     assert(results.size() == 1);
     assert(results[0]->score == 11);
-    assert(strcmp(results[0]->name, "jeff") == 0);
+    assert(strncmp(results[0]->name, "jeff", results[0]->len) == 0);
 }
 
 void test_find_all_ge_hit_limit() {
@@ -163,9 +163,9 @@ void test_find_all_ge_hit_limit() {
     std::vector<SPair *> results = set.find_all_ge(0, "adam", 4, 0, 2);
     assert(results.size() == 2);
     assert(results[0]->score == 0);
-    assert(strcmp(results[0]->name, "won") == 0);
+    assert(strncmp(results[0]->name, "won", results[0]->len) == 0);
     assert(results[1]->score == 10);
-    assert(strcmp(results[1]->name, "tyler") == 0);
+    assert(strncmp(results[1]->name, "tyler", results[1]->len) == 0);
 }
 
 void test_remove_non_existent_pair() {
