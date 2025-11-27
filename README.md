@@ -1,6 +1,6 @@
-# Redis
+# My Redis
 
-This project implements a Redis client and server in C/C++. Redis is an in-memory key-value store known for its speed and low latency. This project incorporates many of the optimizations present in the real Redis implementation (intrusive data structures, thread pools, progressive hash table resizing, etc.) to achieve these characteristics.
+This project implements a Redis-like client and server in C/C++. Redis is an in-memory key-value store known for its speed and low latency. This project incorporates many of the optimizations present in the real Redis implementation (intrusive data structures, thread pools, progressive hash table resizing, etc.) to achieve these characteristics.
 
 ## Set-up
 
