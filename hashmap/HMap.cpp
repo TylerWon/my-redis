@@ -90,7 +90,6 @@ void HMap::rehash_keys() {
     }
 
     if (older->num_keys == 0) {
-        free(older->table);
         delete older;
         older = NULL;
     }
