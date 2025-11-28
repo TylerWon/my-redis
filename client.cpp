@@ -104,7 +104,7 @@ bool recv_response(int server, char *buf, uint32_t *n) {
     }
 
     uint32_t len;
-    read_uint32(&len, (const char **) &buf);
+    read_uint32(&len, &buf);
     if (len > Response::MAX_LEN) {
         debug("response is too long");
         return false;

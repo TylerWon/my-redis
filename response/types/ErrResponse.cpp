@@ -18,7 +18,7 @@ void ErrResponse::serialize(Buffer &buf) {
     str_response->serialize(buf);
 }
 
-ErrResponse* ErrResponse::deserialize(const char *buf) {
+ErrResponse* ErrResponse::deserialize(char *buf) {
     buf += 1; // skip tag
 
     ErrorCode code;

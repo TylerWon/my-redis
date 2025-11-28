@@ -20,7 +20,7 @@ class NilResponse : public Response {
 
          * @return  The Response.
          */
-        static NilResponse* deserialize(const char *buf);
+        static NilResponse* deserialize(char *buf);
         
         uint32_t length() override;
 

@@ -8,7 +8,7 @@ void DblResponse::serialize(Buffer &buf) {
     buf.append_dbl(num);
 }
 
-DblResponse* DblResponse::deserialize(const char *buf) {
+DblResponse* DblResponse::deserialize(char *buf) {
     buf += 1; // skip tag
 
     double num;

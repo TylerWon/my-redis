@@ -16,7 +16,7 @@ Response::MarshalStatus Response::marshal(Buffer &buf) {
     return MarshalStatus::SUCCESS;
 }
 
-std::pair<std::optional<Response *>, Response::UnmarshalStatus> Response::unmarshal(const char *buf, uint32_t n) {
+std::pair<std::optional<Response *>, Response::UnmarshalStatus> Response::unmarshal(char *buf, uint32_t n) {
     if (n < HEADER_SIZE) {
         return std::make_pair(std::nullopt, UnmarshalStatus::INCOMPLETE_RES);
     }

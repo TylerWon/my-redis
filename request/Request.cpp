@@ -10,7 +10,7 @@ void Request::serialize(Buffer &buf) {
     }
 }
 
-Request* Request::deserialize(const char *buf) {
+Request* Request::deserialize(char *buf) {
     uint32_t len;
     read_uint32(&len, &buf);
 
@@ -37,7 +37,7 @@ Request::MarshalStatus Request::marshal(Buffer &buf) {
     return MarshalStatus::SUCCESS;
 }
 
-std::pair<std::optional<Request *>, Request::UnmarshalStatus> Request::unmarshal(const char *buf, uint32_t n) {
+std::pair<std::optional<Request *>, Request::UnmarshalStatus> Request::unmarshal(char *buf, uint32_t n) {
     if (n < HEADER_SIZE) {
         return std::make_pair(std::nullopt, UnmarshalStatus::INCOMPLETE_REQ);
     }

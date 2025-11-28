@@ -32,7 +32,7 @@ class ArrResponse : public Response {
          * 
          * @return  The Response.
          */
-        static ArrResponse* deserialize(const char *buf);
+        static ArrResponse* deserialize(char *buf);
         
         uint32_t length() override;
 

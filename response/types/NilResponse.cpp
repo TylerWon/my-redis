@@ -4,7 +4,7 @@ void NilResponse::serialize(Buffer &buf) {
     buf.append_uint8(ResponseTag::TAG_NIL);
 }
 
-NilResponse* NilResponse::deserialize(const char *buf) {
+NilResponse* NilResponse::deserialize(char *buf) {
     (void) buf; // suppress unused parameter warning
                 // keep unused buf parameter so interface is consistent with other response types
     return new NilResponse();

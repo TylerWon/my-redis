@@ -31,7 +31,7 @@ class ErrResponse : public Response {
 
          * @return  The Response.
          */
-        static ErrResponse* deserialize(const char *buf);
+        static ErrResponse* deserialize(char *buf);
 
         uint32_t length() override;
 

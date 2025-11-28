@@ -23,7 +23,7 @@ void ArrResponse::serialize(Buffer &buf) {
     }
 }
 
-ArrResponse* ArrResponse::deserialize(const char *buf) {
+ArrResponse* ArrResponse::deserialize(char *buf) {
     buf += 1; // skip tag
 
     uint32_t len;

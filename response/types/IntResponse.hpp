@@ -26,7 +26,7 @@ class IntResponse : public Response {
 
          * @return  The Response.
          */
-        static IntResponse* deserialize(const char *buf);
+        static IntResponse* deserialize(char *buf);
         
         uint32_t length() override;
 

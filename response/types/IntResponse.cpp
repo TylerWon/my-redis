@@ -8,7 +8,7 @@ void IntResponse::serialize(Buffer &buf) {
     buf.append_int64(num);
 }
 
-IntResponse* IntResponse::deserialize(const char *buf) {
+IntResponse* IntResponse::deserialize(char *buf) {
     buf += 1; // skip tag
 
     int64_t num;

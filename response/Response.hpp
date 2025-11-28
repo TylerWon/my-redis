@@ -64,7 +64,7 @@ class Response {
          *          (NULL, RES_TOO_BIG) when the Response in the buffer exceeds the size limit.
          *          (NULL, INVALID_RES) when the Response is not one of the Response tags.
          */
-        static std::pair<std::optional<Response *>, UnmarshalStatus> unmarshal(const char *buf, uint32_t n);
+        static std::pair<std::optional<Response *>, UnmarshalStatus> unmarshal(char *buf, uint32_t n);
 
         /**
          * Serializes the Response.

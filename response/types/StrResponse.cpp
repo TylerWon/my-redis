@@ -9,7 +9,7 @@ void StrResponse::serialize(Buffer &buf) {
     buf.append(msg.data(), len);
 }
 
-StrResponse* StrResponse::deserialize(const char *buf) {
+StrResponse* StrResponse::deserialize(char *buf) {
     buf += 1; // skip tag
 
     uint32_t len;

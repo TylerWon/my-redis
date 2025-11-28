@@ -37,7 +37,7 @@ class Request {
          * 
          * @return  The Request.
          */
-        static Request* deserialize(const char *buf);
+        static Request* deserialize(char *buf);
     public:
         static const uint8_t HEADER_SIZE = 4;
 
@@ -79,7 +79,7 @@ class Request {
          *          (NULL, INCOMPLETE_REQ) when the buffer contains an incomplete Request.
          *          (NULL, REQ_TOO_BIG) when the Request in the buffer exceeds the size limit.
          */
-        static std::pair<std::optional<Request *>, UnmarshalStatus> unmarshal(const char *buf, uint32_t n);
+        static std::pair<std::optional<Request *>, UnmarshalStatus> unmarshal(char *buf, uint32_t n);
 
         /* Returns the length of the Request */
         uint32_t length();
