@@ -59,7 +59,7 @@ uint32_t Request::length() {
     for (const std::string &str : cmd) {
         str_size += STR_LEN_SIZE + str.length();
     }
-    return LEN_SIZE + str_size;
+    return ARR_LEN_SIZE + str_size;
 }
 
 std::string Request::to_string() {

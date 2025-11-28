@@ -7,13 +7,15 @@
 
 #include "../buffer/Buffer.hpp"
 
-/* A request */
+/**
+ * A request to the Redis server. 
+ * 
+ * A request is just an array of strings. The strings should form a command when concatenated together.
+ */
 class Request {
     private:
-        static const uint32_t MAX_LEN = 4096;
-
-        const uint8_t LEN_SIZE = 4;
-        const uint8_t STR_LEN_SIZE = 4;
+        static const uint8_t ARR_LEN_SIZE = 4;
+        static const uint8_t STR_LEN_SIZE = 4;
 
         std::vector<std::string> cmd;
         uint32_t len;
@@ -22,9 +24,9 @@ class Request {
          * Serializes the Request.
          * 
          * Serialized structure:
-         * +-------------+------------------+----------------------+-----+------------------+----------------------+
-         * | length (4B) | str1 length (4B) | str1 (variable size) | ... | strn length (4B) | strn (variable size) |
-         * +-------------+------------------+----------------------+-----+------------------+----------------------+
+         * +-------------------+------------------+----------------------+-----+------------------+----------------------+
+         * | array length (4B) | str1 length (4B) | str1 (variable size) | ... | strn length (4B) | strn (variable size) |
+         * +-------------------+------------------+----------------------+-----+------------------+----------------------+
          * 
          * @param buf   The Buffer that will store the serialized Request.
          */
@@ -39,6 +41,7 @@ class Request {
          */
         static Request* deserialize(char *buf);
     public:
+        static const uint32_t MAX_LEN = 4096;
         static const uint8_t HEADER_SIZE = 4;
 
         enum class MarshalStatus {
@@ -52,10 +55,16 @@ class Request {
             REQ_TOO_BIG
         };
 
+        /**
+         * Initializes the Request with the given Redis command. The command should be provided as an array of strings
+         * rather than just a string.
+         * 
+         * @param cmd   Vector containing the Redis command decomposed into individual strings.
+         */
         Request(std::vector<std::string> cmd) : cmd(cmd), len(cmd.size()) {};
 
         /**
-         * Marshals the Request into a packet to be sent over the network.
+         * Marshals the Request into a packet to be sent over the network. Fails if the request exceeds the size limit.
          * 
          * Packet structure:
          * +--------------------+----------------------+
@@ -70,7 +79,9 @@ class Request {
         MarshalStatus marshal(Buffer &buf);
 
         /**
-         * Unmarshals a Request from a Request packet in the provided byte buffer.
+         * Unmarshals a Request from a Request packet in the provided byte buffer. Fails if the request is incomplete
+         * (i.e. the request's length header indicates that its longer than the given buffer) or the request exceeds the
+         * size limit.
          * 
          * @param buf   Pointer to a byte buffer that stores the Request packet.
          * @param n     Size of the buffer.
@@ -84,7 +95,11 @@ class Request {
         /* Returns the length of the Request */
         uint32_t length();
         
-        /* Returns the Request as a string */
+        /**
+         * Returns the Request as a string.
+         * 
+         * Example: If command is "set name tyler", returns "set name tyler"
+         */
         std::string to_string();
 
         /* Returns the command */
