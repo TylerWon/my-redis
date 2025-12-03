@@ -24,5 +24,8 @@ class NilResponse : public Response {
         
         uint32_t length() override;
 
+        /**
+         * Format: (nil)
+         */
         std::string to_string() override;
 };

@@ -83,3 +83,7 @@ std::string ArrResponse::to_string() {
     output += std::string("\n(array) end");
     return output;
 }
+
+std::vector<Response *> ArrResponse::get_elements() {
+    return elements;
+}

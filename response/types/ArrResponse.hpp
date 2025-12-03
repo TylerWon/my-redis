@@ -6,7 +6,7 @@
 /* An array response */
 class ArrResponse : public Response {
     private:
-        const uint8_t LEN_SIZE = 4;
+        static const uint8_t LEN_SIZE = 4;
 
         std::vector<Response *> elements;
         uint32_t len;
@@ -36,5 +36,22 @@ class ArrResponse : public Response {
         
         uint32_t length() override;
 
+        /**
+         * Format: 
+         * (array) len=<length>\n
+         * element 1...\n
+         * element 2...\n
+         * ...
+         * (array) end
+         * 
+         * Example: 
+         * "(array) len=2\n
+         * (string) message\n
+         * (double) 10.5\n
+         * (array) end"
+         */
         std::string to_string() override;
+
+        /* Returns the elements of the array */
+        std::vector<Response *> get_elements();
 };

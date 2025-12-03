@@ -5,7 +5,7 @@
 /* An integer response */
 class IntResponse : public Response {
     private:
-        const uint8_t NUM_SIZE = 8;
+        static const uint8_t NUM_SIZE = 8;
 
         int64_t num;
     public:
@@ -30,6 +30,11 @@ class IntResponse : public Response {
         
         uint32_t length() override;
 
+        /**
+         * Format: (integer) <integer>
+         * 
+         * Example: "(integer) 10"
+         */
         std::string to_string() override;
 
         /* Returns the integer */

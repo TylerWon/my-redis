@@ -21,12 +21,12 @@ void ErrResponse::serialize(Buffer &buf) {
 ErrResponse* ErrResponse::deserialize(char *buf) {
     buf += 1; // skip tag
 
-    ErrorCode code;
-    read_uint8((uint8_t *) &code, &buf);
+    uint8_t code;
+    read_uint8(&code, &buf);
 
     StrResponse *str_response = StrResponse::deserialize(buf);
 
-    return new ErrResponse(code, str_response);
+    return new ErrResponse((ErrorCode) code, str_response);
 }
 
 uint32_t ErrResponse::length() {

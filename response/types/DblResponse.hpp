@@ -5,7 +5,7 @@
 /* A double response */
 class DblResponse : public Response {
     private:
-        const uint8_t NUM_SIZE = 8;
+        static const uint8_t NUM_SIZE = 8;
 
         double num;
     public:
@@ -30,6 +30,11 @@ class DblResponse : public Response {
         
         uint32_t length() override;
 
+        /**
+         * Format: (double) <double>
+         * 
+         * Example: "(double) 100.0"
+         */
         std::string to_string() override;
 
         /* Returns the double */

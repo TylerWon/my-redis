@@ -6,9 +6,11 @@
 
 #include "../buffer/Buffer.hpp"
 
-/* Base response class */
+/* Base response class. All response types should inherit this class. */
 class Response {
-    protected:
+    public:
+        static const uint8_t HEADER_SIZE = 4;
+        static const uint32_t MAX_LEN = 4096;
         static const uint8_t TAG_SIZE = 1;
 
         /* Identifies the type of response when serialized */
@@ -20,9 +22,6 @@ class Response {
             TAG_ARR,
             TAG_DBL
         };
-    public:
-        static const uint8_t HEADER_SIZE = 4;
-        static const uint32_t MAX_LEN = 4096;
 
         enum class MarshalStatus {
             SUCCESS,
@@ -67,7 +66,7 @@ class Response {
         static std::pair<std::optional<Response *>, UnmarshalStatus> unmarshal(char *buf, uint32_t n);
 
         /**
-         * Serializes the Response.
+         * Serializes the Response. The exact structure of the serialized Response depends on the type.
          * 
          * @param buf   The Buffer that will store the serialized Response.
          */
@@ -76,6 +75,6 @@ class Response {
         /* Returns the length of the Response */
         virtual uint32_t length() = 0;
         
-        /* Returns the Response as a string */
+        /* Returns the Response as a string. The exact format of the string depends on the Response type. */
         virtual std::string to_string() = 0;
 };

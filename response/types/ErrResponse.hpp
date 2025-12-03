@@ -35,6 +35,11 @@ class ErrResponse : public Response {
 
         uint32_t length() override;
 
+        /**
+         * Format: (error) <message>
+         * 
+         * Example: "(error) response is too big"
+         */
         std::string to_string() override;
 
         /* Returns the error code */

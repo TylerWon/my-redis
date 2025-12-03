@@ -5,7 +5,7 @@
 /* A string response */
 class StrResponse : public Response {
     private:
-        const uint8_t LEN_SIZE = 4;
+        static const uint8_t LEN_SIZE = 4;
 
         std::string msg;
         uint32_t len;
@@ -31,6 +31,11 @@ class StrResponse : public Response {
         
         uint32_t length() override;
 
+        /**
+         * Format: "(string) <string>"
+         * 
+         * Example: "(string) this is a sentence"
+         */
         std::string to_string() override;
 
         /* Returns the message */
