@@ -21,16 +21,7 @@ class ThreadPool {
         std::deque<Task> tasks;
         pthread_mutex_t mu;
         pthread_cond_t not_empty;
-    public:
-        /* Initializes the ThreadPool with n workers */
-        ThreadPool(uint32_t n);
-
-        /**
-         * Adds a Task to the queue.
-         * 
-         * @param Task  The Task to add to the queue.
-         */
-        void add_task(Task task);
+        bool shutdown = false;
 
         /**
          * Start-up function for a worker thread. 
@@ -41,4 +32,16 @@ class ThreadPool {
          * @param arg    Void pointer to the ThreadPool.
          */
         static void *worker(void *arg);
+    public:
+        /* Initializes the ThreadPool with n workers */
+        ThreadPool(uint32_t n);
+
+        ~ThreadPool();
+
+        /**
+         * Adds a Task to the queue.
+         * 
+         * @param Task  The Task to add to the queue.
+         */
+        void add_task(Task task);
 };
