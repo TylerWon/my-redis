@@ -1,3 +1,5 @@
+#pragma once
+
 #include <ctime>
 
 #include "../min-heap/components/MHNode.hpp"
@@ -11,3 +13,14 @@ struct TTLTimer {
     time_t expiry_time_ms = 0;
     MHNode node;
 };
+
+/**
+ * Callback which checks if one TTLTimer is less than another in a MinHeap.
+ * 
+ * @param node1 The MHNode contained by the first TTLTimer.
+ * @param node2 The MHNode contained by the second TTLTimer.
+ * 
+ * @return  True if the first TTLTimer is less than the second TTLTimer.
+ *          False otherwise.
+ */
+bool is_ttl_timer_less(MHNode *node1, MHNode *node2);

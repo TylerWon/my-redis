@@ -1,3 +1,5 @@
+#pragma once
+
 #include <ctime>
 
 #include "../queue/Queue.hpp"
