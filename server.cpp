@@ -346,22 +346,18 @@ void handle_recv(Conn *conn) {
     while (Request *request = parse_request(conn)) {
         log("request from connection %d: %s", conn->fd, request->to_string().data());
 
-        Response *response = cmd_executor.execute(request->get_cmd());
+        std::unique_ptr<Response> response = cmd_executor.execute(request->get_cmd());
         if (response->marshal(conn->outgoing) == Response::MarshalStatus::RES_TOO_BIG) {
             log("response to connection %d exceeds the size limit", conn->fd);
 
-            delete response;
-            response = new ErrResponse(ErrResponse::ErrorCode::ERR_TOO_BIG, "response is too big");
-            response->marshal(conn->outgoing);
-
+            ErrResponse err(ErrResponse::ErrorCode::ERR_TOO_BIG, "response is too big");
+            err.marshal(conn->outgoing);
             conn->want_close = true;
-            delete response;
 
             return;
         }
 
         delete request;
-        delete response;
     }
 
     if (conn->outgoing.size() > 0) {

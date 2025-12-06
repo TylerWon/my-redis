@@ -17,19 +17,19 @@ Entry *CommandExecutor::lookup_entry(const std::string &key) {
     return node != NULL ? container_of(node, Entry, node) : NULL;
 }
 
-Response *CommandExecutor::do_get(const std::string &key) {
+std::unique_ptr<Response> CommandExecutor::do_get(const std::string &key) {
     Entry *entry = lookup_entry(key);
 
     if (entry == NULL) {
-        return new NilResponse();
+        return std::make_unique<NilResponse>();
     } else if (entry->type != EntryType::STR) {
-        return new ErrResponse(ErrResponse::ErrorCode::ERR_BAD_TYPE, "value is not a string");
+        return std::make_unique<ErrResponse>(ErrResponse::ErrorCode::ERR_BAD_TYPE, "value is not a string");
     }
 
-    return new StrResponse(entry->str);
+    return std::make_unique<StrResponse>(entry->str);
 }
 
-Response *CommandExecutor::do_set(const std::string &key, const std::string &value) {
+std::unique_ptr<Response> CommandExecutor::do_set(const std::string &key, const std::string &value) {
     Entry *entry = lookup_entry(key);
 
     if (entry != NULL) {
@@ -47,10 +47,10 @@ Response *CommandExecutor::do_set(const std::string &key, const std::string &val
         kv_store->insert(&entry->node);
     }
 
-    return new StrResponse("OK");
+    return std::make_unique<StrResponse>("OK");
 }
 
-Response *CommandExecutor::do_del(const std::string &key) {
+std::unique_ptr<Response> CommandExecutor::do_del(const std::string &key) {
     LookupEntry lookup_entry;
     lookup_entry.key = key;
     lookup_entry.node.hval = str_hash(key);
@@ -58,10 +58,10 @@ Response *CommandExecutor::do_del(const std::string &key) {
     
     if (node != NULL) {
         delete_entry(container_of(node, Entry, node), ttl_timers, thread_pool);
-        return new IntResponse(1);
+        return std::make_unique<IntResponse>(1);
     }
 
-    return new IntResponse(0);
+    return std::make_unique<IntResponse>(0);
 }
 
 /**
@@ -76,7 +76,7 @@ void get_key(HNode *node, void *arg) {
     keys.push_back(entry->key);
 }
 
-Response *CommandExecutor::do_keys() {
+std::unique_ptr<Response> CommandExecutor::do_keys() {
     std::vector<std::string> keys;
     kv_store->for_each(get_key, (void *) &keys);
 
@@ -85,10 +85,10 @@ Response *CommandExecutor::do_keys() {
         elements.push_back(new StrResponse(key));
     }
 
-    return new ArrResponse(elements);
+    return std::make_unique<ArrResponse>(elements);
 }
 
-Response *CommandExecutor::do_zadd(const std::string &key, double score, const std::string &name) {
+std::unique_ptr<Response> CommandExecutor::do_zadd(const std::string &key, double score, const std::string &name) {
     Entry *entry = lookup_entry(key);
 
     if (entry == NULL) {
@@ -98,48 +98,48 @@ Response *CommandExecutor::do_zadd(const std::string &key, double score, const s
         entry->node.hval = str_hash(key);
         kv_store->insert(&entry->node);
     } else if (entry != NULL && entry->type != EntryType::SORTED_SET) {
-        return new ErrResponse(ErrResponse::ErrorCode::ERR_BAD_TYPE, "value is not a sorted set");
+        return std::make_unique<ErrResponse>(ErrResponse::ErrorCode::ERR_BAD_TYPE, "value is not a sorted set");
     }
 
     entry->zset.insert(score, name.data(), name.length());
 
-    return new IntResponse(1);
+    return std::make_unique<IntResponse>(1);
 }
 
-Response *CommandExecutor::do_zscore(const std::string &key, const std::string &name) {
+std::unique_ptr<Response> CommandExecutor::do_zscore(const std::string &key, const std::string &name) {
     Entry *entry = lookup_entry(key);
 
     if (entry != NULL && entry->type == EntryType::SORTED_SET) {
         SPair *pair = entry->zset.lookup(name.data(), name.length());
         if (pair != NULL) {
-            return new StrResponse(std::to_string(pair->score));
+            return std::make_unique<StrResponse>(std::to_string(pair->score));
         }
     }
 
-    return new NilResponse();
+    return std::make_unique<NilResponse>();
 }
 
-Response *CommandExecutor::do_zrem(const std::string &key, const std::string &name) {
+std::unique_ptr<Response> CommandExecutor::do_zrem(const std::string &key, const std::string &name) {
     Entry *entry = lookup_entry(key);
 
     if (entry == NULL) {
-        return new IntResponse(0);
+        return std::make_unique<IntResponse>(0);
     } else if (entry != NULL && entry->type != EntryType::SORTED_SET) {
-        return new ErrResponse(ErrResponse::ErrorCode::ERR_BAD_TYPE, "value is not a sorted set");
+        return std::make_unique<ErrResponse>(ErrResponse::ErrorCode::ERR_BAD_TYPE, "value is not a sorted set");
     }
 
     bool success = entry->zset.remove(name.data(), name.length());
 
-    return success ? new IntResponse(1) : new IntResponse(0);
+    return success ? std::make_unique<IntResponse>(1) : std::make_unique<IntResponse>(0);
 }
 
-Response *CommandExecutor::do_zquery(const std::string &key, double score, const std::string &name, uint64_t offset, uint64_t limit) {
+std::unique_ptr<Response> CommandExecutor::do_zquery(const std::string &key, double score, const std::string &name, uint64_t offset, uint64_t limit) {
     Entry *entry = lookup_entry(key);
 
     if (entry == NULL) {
-        return new ArrResponse(std::vector<Response *>());
+        return std::make_unique<ArrResponse>(std::vector<Response *>());
     } else if (entry != NULL && entry->type != EntryType::SORTED_SET) {
-        return new ErrResponse(ErrResponse::ErrorCode::ERR_BAD_TYPE, "value is not a sorted set");
+        return std::make_unique<ErrResponse>(ErrResponse::ErrorCode::ERR_BAD_TYPE, "value is not a sorted set");
     }
 
     std::vector<SPair *> pairs = entry->zset.find_all_ge(score, name.data(), name.length(), offset, limit);
@@ -151,28 +151,28 @@ Response *CommandExecutor::do_zquery(const std::string &key, double score, const
         elements.push_back(name);
     }
 
-    return new ArrResponse(elements);
+    return std::make_unique<ArrResponse>(elements);
 }
 
-Response *CommandExecutor::do_zrank(const std::string &key, const std::string &name) {
+std::unique_ptr<Response> CommandExecutor::do_zrank(const std::string &key, const std::string &name) {
     Entry *entry = lookup_entry(key);
     
     if (entry == NULL || entry->type != EntryType::SORTED_SET) {
-        return new NilResponse();
+        return std::make_unique<NilResponse>();
     }
 
     int64_t rank = entry->zset.rank(name.data(), name.length());
     if (rank < 0) {
-        return new NilResponse();
+        return std::make_unique<NilResponse>();
     }
 
-    return new IntResponse(rank);
+    return std::make_unique<IntResponse>(rank);
 }
 
-Response *CommandExecutor::do_expire(const std::string &key, time_t seconds) {
+std::unique_ptr<Response> CommandExecutor::do_expire(const std::string &key, time_t seconds) {
     Entry *entry = lookup_entry(key);
     if (entry == NULL) {
-        return new IntResponse(0);
+        return std::make_unique<IntResponse>(0);
     }
 
     TTLTimer *timer = &entry->ttl_timer;
@@ -184,44 +184,44 @@ Response *CommandExecutor::do_expire(const std::string &key, time_t seconds) {
         ttl_timers->update(&timer->node, is_ttl_timer_less);
     }
 
-    return new IntResponse(1);
+    return std::make_unique<IntResponse>(1);
 }
 
-Response *CommandExecutor::do_ttl(const std::string &key) { 
+std::unique_ptr<Response> CommandExecutor::do_ttl(const std::string &key) { 
     Entry *entry = lookup_entry(key);
     if (entry == NULL) {
-        return new IntResponse(-2);
+        return std::make_unique<IntResponse>(-2);
     }
 
     TTLTimer *timer = &entry->ttl_timer;
     if (timer->expiry_time_ms == 0) {
-        return new IntResponse(-1);
+        return std::make_unique<IntResponse>(-1);
     }
 
     time_t now_ms = get_time_ms();
-    return new IntResponse((timer->expiry_time_ms - now_ms) / 1000);
+    return std::make_unique<IntResponse>((timer->expiry_time_ms - now_ms) / 1000);
 }
 
-Response *CommandExecutor::do_persist(const std::string &key) { 
+std::unique_ptr<Response> CommandExecutor::do_persist(const std::string &key) { 
     Entry *entry = lookup_entry(key);
     if (entry == NULL) {
-        return new IntResponse(0);
+        return std::make_unique<IntResponse>(0);
     }
 
     TTLTimer *timer = &entry->ttl_timer;
     if (timer->expiry_time_ms == 0) {
-        return new IntResponse(0);
+        return std::make_unique<IntResponse>(0);
     }
 
     ttl_timers->remove(&timer->node, is_ttl_timer_less);
     timer->expiry_time_ms = 0;
 
-    return new IntResponse(1);
+    return std::make_unique<IntResponse>(1);
 }
 
-Response *CommandExecutor::execute(const std::vector<std::string> &command) {
+std::unique_ptr<Response> CommandExecutor::execute(const std::vector<std::string> &command) {
     if (command.size() < 1) {
-        return new ErrResponse(ErrResponse::ErrorCode::ERR_UNKNOWN, "unknown command");
+        return std::make_unique<ErrResponse>(ErrResponse::ErrorCode::ERR_UNKNOWN, "unknown command");
     }
 
     std::string name = command[0];
@@ -261,5 +261,5 @@ Response *CommandExecutor::execute(const std::vector<std::string> &command) {
         }
     }
     
-    return new ErrResponse(ErrResponse::ErrorCode::ERR_UNKNOWN, "unknown command");
+    return std::make_unique<ErrResponse>(ErrResponse::ErrorCode::ERR_UNKNOWN, "unknown command");
 }

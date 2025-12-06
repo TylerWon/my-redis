@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <string>
 
 #include "../entry/Entry.hpp"
@@ -38,7 +39,7 @@ class CommandExecutor {
          *          - NilResponse: if the key does not exist.
          *          - ErrResponse: if the value stored at the key is not a string.
          */
-        Response *do_get(const std::string &key);
+        std::unique_ptr<Response> do_get(const std::string &key);
 
         /**
          * Sets the value of the provided key in the kv store. 
@@ -50,7 +51,7 @@ class CommandExecutor {
          * 
          * @return  StrResponse ("OK"): the key was set.
          */
-        Response *do_set(const std::string &key, const std::string &value);
+        std::unique_ptr<Response> do_set(const std::string &key, const std::string &value);
 
         /**
          * Deletes the entry for the provided key in the kv store.
@@ -59,14 +60,14 @@ class CommandExecutor {
          * 
          * @return  IntResponse: the number of keys removed.
          */
-        Response *do_del(const std::string &key);
+        std::unique_ptr<Response> do_del(const std::string &key);
 
         /**
          * Gets all keys in the kv store.
          * 
          * @return ArrResponse: a list of keys.
          */
-        Response *do_keys();
+        std::unique_ptr<Response> do_keys();
 
         /**
          * Adds a pair to the sorted set stored at the given key.
@@ -83,7 +84,7 @@ class CommandExecutor {
          *          - IntResponse: the number of new or updated pairs.
          *          - ErrResponse: the key does not hold a sorted set.
          */
-        Response *do_zadd(const std::string &key, double score, const std::string &name);
+        std::unique_ptr<Response> do_zadd(const std::string &key, double score, const std::string &name);
 
         /**
          * Gets the score of name in the sorted set stored at key.
@@ -98,7 +99,7 @@ class CommandExecutor {
          *          - StrResponse: the score of the name.
          *          - NilResponse: if name does not exist in the sorted set, or the key does not exist.
          */
-        Response *do_zscore(const std::string &key, const std::string &name);
+        std::unique_ptr<Response> do_zscore(const std::string &key, const std::string &name);
 
         /**
          * Removes name from the sorted set stored at key.
@@ -112,7 +113,7 @@ class CommandExecutor {
          *          - IntResponse: the number of pairs removed from the sorted set.
          *          - ErrResponse: the key does not hold a sorted set.
          */
-        Response *do_zrem(const std::string &key, const std::string &name);
+        std::unique_ptr<Response> do_zrem(const std::string &key, const std::string &name);
 
         /**
          * Finds all pairs in the sorted set stored at key greater than or equal to the given pair.
@@ -129,7 +130,7 @@ class CommandExecutor {
          *          - ArrResponse: the pairs greater than or equal to the given pair.
          *          - ErrResponse: the key does not hold a sorted set.
          */
-        Response *do_zquery(const std::string &key, double score, const std::string &name, uint64_t offset, uint64_t limit);
+        std::unique_ptr<Response> do_zquery(const std::string &key, double score, const std::string &name, uint64_t offset, uint64_t limit);
 
         /**
          * Gets the rank (position in sorted order) of name in the sorted set stored at key. The rank is 0-based, so the
@@ -145,7 +146,7 @@ class CommandExecutor {
          *          - NilResponse: if the key does not exist or the pair does not exist in the sorted set.
          *          - IntResponse: the rank of the pair.
          */
-        Response *do_zrank(const std::string &key, const std::string &name);
+        std::unique_ptr<Response> do_zrank(const std::string &key, const std::string &name);
 
         /**
          * Sets a timeout on the given key. After the timeout has expired, the key will be deleted.
@@ -160,7 +161,7 @@ class CommandExecutor {
          *          - IntReponse: 1 if the timeout was set.
          *          - IntResponse: 0 if timeout was not set.
          */
-        Response *do_expire(const std::string &key, time_t seconds);
+        std::unique_ptr<Response> do_expire(const std::string &key, time_t seconds);
 
         /**
          * Gets the remaining time-to-live of the given key.
@@ -172,7 +173,7 @@ class CommandExecutor {
          *          - IntResponse: -1 if the key exists but has no associated expiration.
          *          - IntResponse: -2 if the key does not exist.
          */
-        Response *do_ttl(const std::string &key);
+        std::unique_ptr<Response> do_ttl(const std::string &key);
 
         /**
          * Removes the existing timeout on the given key.
@@ -183,7 +184,7 @@ class CommandExecutor {
          *          - IntResponse: 0 if the key does not exist or does not have an associated timeout.
          *          - IntResponse: 1 if the timeout has been removed.
          */
-        Response *do_persist(const std::string &key);
+        std::unique_ptr<Response> do_persist(const std::string &key);
     public:
         /* Initializes a CommandExecutor, storing references to the kv store, TTL timers, and thread pool */
         CommandExecutor(HMap *kv_store, MinHeap *ttl_timers, ThreadPool *thread_pool) : kv_store(kv_store), ttl_timers(ttl_timers), thread_pool(thread_pool) {};
@@ -209,5 +210,5 @@ class CommandExecutor {
          * 
          * @return  Pointer to the Response for executing the command.
          */
-        Response *execute(const std::vector<std::string> &command);
+        std::unique_ptr<Response> execute(const std::vector<std::string> &command);
 };
