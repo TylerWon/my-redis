@@ -13,7 +13,7 @@ Entry *CommandExecutor::lookup_entry(const std::string &key) {
     LookupEntry lookup_entry;
     lookup_entry.key = key;
     lookup_entry.node.hval = str_hash(key);
-    HNode *node = kv_store.lookup(&lookup_entry.node, are_entries_equal);
+    HNode *node = kv_store->lookup(&lookup_entry.node, are_entries_equal);
     return node != NULL ? container_of(node, Entry, node) : NULL;
 }
 
@@ -42,9 +42,9 @@ Response *CommandExecutor::do_set(const std::string &key, const std::string &val
         entry->node.hval = str_hash(key);
         if (entry->ttl_timer.expiry_time_ms != 0) {
             entry->ttl_timer.expiry_time_ms = 0;
-            ttl_timers.remove(&entry->ttl_timer.node, is_ttl_timer_less);
+            ttl_timers->remove(&entry->ttl_timer.node, is_ttl_timer_less);
         }
-        kv_store.insert(&entry->node);
+        kv_store->insert(&entry->node);
     }
 
     return new StrResponse("OK");
@@ -54,7 +54,7 @@ Response *CommandExecutor::do_del(const std::string &key) {
     LookupEntry lookup_entry;
     lookup_entry.key = key;
     lookup_entry.node.hval = str_hash(key);
-    HNode *node = kv_store.remove(&lookup_entry.node, are_entries_equal);
+    HNode *node = kv_store->remove(&lookup_entry.node, are_entries_equal);
     
     if (node != NULL) {
         delete_entry(container_of(node, Entry, node), ttl_timers, thread_pool);
@@ -78,7 +78,7 @@ void get_key(HNode *node, void *arg) {
 
 Response *CommandExecutor::do_keys() {
     std::vector<std::string> keys;
-    kv_store.for_each(get_key, (void *) &keys);
+    kv_store->for_each(get_key, (void *) &keys);
 
     std::vector<Response *> elements;
     for (const std::string &key : keys) {
@@ -96,7 +96,7 @@ Response *CommandExecutor::do_zadd(const std::string &key, double score, const s
         entry->key = key;
         entry->type = EntryType::SORTED_SET;
         entry->node.hval = str_hash(key);
-        kv_store.insert(&entry->node);
+        kv_store->insert(&entry->node);
     } else if (entry != NULL && entry->type != EntryType::SORTED_SET) {
         return new ErrResponse(ErrResponse::ErrorCode::ERR_BAD_TYPE, "value is not a sorted set");
     }
@@ -179,9 +179,9 @@ Response *CommandExecutor::do_expire(const std::string &key, time_t seconds) {
     time_t old_expiry_time = timer->expiry_time_ms;
     timer->expiry_time_ms = get_time_ms() + seconds * 1000;
     if (old_expiry_time == 0) {
-        ttl_timers.insert(&timer->node, is_ttl_timer_less);
+        ttl_timers->insert(&timer->node, is_ttl_timer_less);
     } else {
-        ttl_timers.update(&timer->node, is_ttl_timer_less);
+        ttl_timers->update(&timer->node, is_ttl_timer_less);
     }
 
     return new IntResponse(1);
@@ -213,42 +213,53 @@ Response *CommandExecutor::do_persist(const std::string &key) {
         return new IntResponse(0);
     }
 
-    ttl_timers.remove(&timer->node, is_ttl_timer_less);
+    ttl_timers->remove(&timer->node, is_ttl_timer_less);
     timer->expiry_time_ms = 0;
 
     return new IntResponse(1);
 }
 
 Response *CommandExecutor::execute(const std::vector<std::string> &command) {
-    Response *response;
-
-    if (command.size() == 2 && command[0] == "get") {
-        response = do_get(command[1]);
-    } else if (command.size() == 3 && command[0] == "set") {
-        response = do_set(command[1], command[2]);
-    } else if (command.size() == 2 && command[0] == "del") {
-        response = do_del(command[1]);
-    } else if (command.size() == 1 && command[0] == "keys") {
-        response = do_keys();
-    } else if (command.size() == 4 && command[0] == "zadd") {
-        response = do_zadd(command[1], std::stod(command[2]), command[3]);
-    } else if (command.size() == 3 && command[0] == "zscore") {
-        response = do_zscore(command[1], command[2]);
-    } else if (command.size() == 3 && command[0] == "zrem") {
-        response = do_zrem(command[1], command[2]);
-    } else if (command.size() == 6 && command[0] == "zquery") {
-        response = do_zquery(command[1], std::stod(command[2]), command[3], std::stol(command[4]), std::stoul(command[5]));
-    } else if (command.size() == 3 && command[0] == "zrank") {
-        response = do_zrank(command[1], command[2]);
-    } else if (command.size() == 3 && command[0] == "expire") {
-        response = do_expire(command[1], std::stol(command[2]));
-    } else if (command.size() == 2 && command[0] == "ttl") {
-        response = do_ttl(command[1]);
-    } else if (command.size() == 2 && command[0] == "persist") {
-        response = do_persist(command[1]);
-    } else {
-        response = new ErrResponse(ErrResponse::ErrorCode::ERR_UNKNOWN, "unknown command");
+    if (command.size() < 1) {
+        return new ErrResponse(ErrResponse::ErrorCode::ERR_UNKNOWN, "unknown command");
     }
 
-    return response;
+    std::string name = command[0];
+    if (command.size() == 1) {
+        if (name == "keys") {
+            return do_keys();
+        }
+    } else if (command.size() == 2) {
+        if (name == "get") {
+            return do_get(command[1]);
+        } else if (name == "del") {
+            return do_del(command[1]);
+        } else if (name == "ttl") {
+            return do_ttl(command[1]);
+        } else if (name == "persist") {
+            return do_persist(command[1]);
+        }
+    } else if (command.size() == 3) {
+        if (name == "set") {
+            return do_set(command[1], command[2]);
+        } else if (name == "zscore") {
+            return do_zscore(command[1], command[2]);
+        } else if (name == "zrem") {
+            return do_zrem(command[1], command[2]);
+        } else if (name == "zrank") {
+            return do_zrank(command[1], command[2]); 
+        } else if (name == "expire") {
+            return do_expire(command[1], std::stol(command[2]));
+        }
+    } else if (command.size() == 4) {
+        if (name == "zadd") {
+            return do_zadd(command[1], std::stod(command[2]), command[3]);
+        }
+    } else if (command.size() == 6) {
+        if (name == "zquery") {
+            return do_zquery(command[1], std::stod(command[2]), command[3], std::stol(command[4]), std::stoul(command[5]));
+        }
+    }
+    
+    return new ErrResponse(ErrResponse::ErrorCode::ERR_UNKNOWN, "unknown command");
 }

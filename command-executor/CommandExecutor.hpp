@@ -11,9 +11,9 @@
 /* Executes a Redis command */
 class CommandExecutor {
     private:
-        HMap &kv_store;
-        MinHeap &ttl_timers;
-        ThreadPool &thread_pool;
+        HMap *kv_store;
+        MinHeap *ttl_timers;
+        ThreadPool *thread_pool;
         
         /**
          * Searches for the Entry with the given key in the kv store.
@@ -43,7 +43,7 @@ class CommandExecutor {
         /**
          * Sets the value of the provided key in the kv store. 
          * 
-         * If key already exists, updates its value.
+         * If key already exists, updates its value (regardless of type) and clears its TTL (if set).
          * 
          * @param key   The key to set.
          * @param value The value for the key.
@@ -88,6 +88,9 @@ class CommandExecutor {
         /**
          * Gets the score of name in the sorted set stored at key.
          * 
+         * If the key does not exist, the key does not hold a sorted set, or the name is not in the sorted set, a nil
+         * is returned.
+         * 
          * @param key   The key of the sorted set.
          * @param name  The name of the score to get.
          * 
@@ -120,7 +123,7 @@ class CommandExecutor {
          * @param score     The pair's score.
          * @param name      The pair's name.
          * @param offset    The number of pairs to exclude from the beginning of the result.
-         * @param limit     The maximum number of pairs to return.
+         * @param limit     The maximum number of pairs to return. 0 means no limit.
          * 
          * @return  One of the following:
          *          - ArrResponse: the pairs greater than or equal to the given pair.
@@ -129,9 +132,11 @@ class CommandExecutor {
         Response *do_zquery(const std::string &key, double score, const std::string &name, uint64_t offset, uint64_t limit);
 
         /**
-         * Gets the rank (position in sorted order) of name in the sorted set stored at key.
+         * Gets the rank (position in sorted order) of name in the sorted set stored at key. The rank is 0-based, so the
+         * lowest pair is rank 0.
          * 
-         * The rank is 0-based, so the lowest pair is rank 0.
+         * If the key does not exist, the key does not hold a sorted set, or the name is not in the sorted set, a nil
+         * is returned.
          * 
          * @param key   The key of the sorted set.
          * @param name  The name of the pair to rank.
@@ -145,8 +150,8 @@ class CommandExecutor {
         /**
          * Sets a timeout on the given key. After the timeout has expired, the key will be deleted.
          * 
-         * The timeout will be cleared by commands that delete or overwrite the contents of the key. This includes the del and 
-         * set commands.
+         * The timeout will be cleared by commands that delete or overwrite the contents of the key. This includes the 
+         * del and set commands.
          * 
          * @param key       The key to set the timeout on.
          * @param seconds   The timeout in seconds.
@@ -181,26 +186,26 @@ class CommandExecutor {
         Response *do_persist(const std::string &key);
     public:
         /* Initializes a CommandExecutor, storing references to the kv store, TTL timers, and thread pool */
-        CommandExecutor(HMap &kv_store, MinHeap &ttl_timers, ThreadPool &thread_pool) : kv_store(kv_store), ttl_timers(ttl_timers), thread_pool(thread_pool) {};
+        CommandExecutor(HMap *kv_store, MinHeap *ttl_timers, ThreadPool *thread_pool) : kv_store(kv_store), ttl_timers(ttl_timers), thread_pool(thread_pool) {};
 
         /**
          * Executes the given command.
          * 
          * The following commands are supported:
-         * 1. get key
-         * 2. set key value
-         * 3. del key
+         * 1. get <key>
+         * 2. set <key> <value>
+         * 3. del <key>
          * 4. keys
-         * 5. zadd key score name
-         * 6. zscore key name
-         * 7. zrem key name
-         * 8. zquery key score name offset limit
-         * 9. zrank key name
-         * 10. expire key seconds
-         * 11. ttl key
-         * 12. persist key
+         * 5. zadd <key> <score> <name>
+         * 6. zscore <key> <name>
+         * 7. zrem <key> <name>
+         * 8. zquery <key> <score> <name> <offset> <limit>
+         * 9. zrank <key> <name>
+         * 10. expire <key> <seconds>
+         * 11. ttl <key>
+         * 12. persist <key>
          * 
-         * @param command   The command to execute.
+         * @param command   The command to execute, broken up into its individual strings.
          * 
          * @return  Pointer to the Response for executing the command.
          */

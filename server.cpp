@@ -342,7 +342,7 @@ void handle_recv(Conn *conn) {
         return;
     }
 
-    CommandExecutor cmd_executor(kv_store, ttl_timers, thread_pool);
+    CommandExecutor cmd_executor(&kv_store, &ttl_timers, &thread_pool);
     while (Request *request = parse_request(conn)) {
         log("request from connection %d: %s", conn->fd, request->to_string().data());
 
@@ -418,7 +418,7 @@ void process_timers() {
         Entry *entry = container_of(timer, Entry, ttl_timer);
         log("key \'%s\' expired", entry->key.data());
         kv_store.remove(&entry->node, are_entries_equal);
-        delete_entry(entry, ttl_timers, thread_pool);
+        delete_entry(entry, &ttl_timers, &thread_pool);
         count++;
     }
 }

@@ -50,7 +50,7 @@ bool are_entries_equal(HNode *node1, HNode *node2);
  * Deletes (deallocates) an Entry.
  * 
  * @param entry         Pointer to the Entry to delete.
- * @param ttl_timers    Reference to the TTL timers for entries in the kv store.
- * @param thread_pool   Reference to the thread pool.
+ * @param ttl_timers    Pointer to the TTL timers for entries in the kv store.
+ * @param thread_pool   Pointer to the thread pool.
  */
-void delete_entry(Entry *entry, MinHeap &ttl_timers, ThreadPool &thread_pool);
+void delete_entry(Entry *entry, MinHeap *ttl_timers, ThreadPool *thread_pool);

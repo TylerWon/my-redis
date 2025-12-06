@@ -13,17 +13,17 @@ void delete_entry_func(void *arg) {
     delete (Entry *) arg;
 }
 
-void delete_entry(Entry *entry, MinHeap &ttl_timers, ThreadPool &thread_pool) {
+void delete_entry(Entry *entry, MinHeap *ttl_timers, ThreadPool *thread_pool) {
     TTLTimer *timer = &entry->ttl_timer;
     if (timer->expiry_time_ms != 0) {
-        ttl_timers.remove(&entry->ttl_timer.node, is_ttl_timer_less);
+        ttl_timers->remove(&entry->ttl_timer.node, is_ttl_timer_less);
     }
 
     if (entry->type == EntryType::SORTED_SET) {
         const uint32_t LARGE_CONTAINER_SIZE = 1000;
         if (entry->zset.length() >= LARGE_CONTAINER_SIZE) {
             log("deleting large sorted set, delegating task to worker threads");
-            thread_pool.add_task({ &delete_entry_func, (void *) entry });
+            thread_pool->add_task({ &delete_entry_func, (void *) entry });
             return;
         }
     }
