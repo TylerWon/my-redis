@@ -35,6 +35,8 @@ struct LookupEntry {
     std::string key;
 };
 
+extern const uint32_t LARGE_ZSET_SIZE;
+
 /**
  * Callback which checks if two hash map Entries are equal.
  * 
@@ -48,6 +50,9 @@ bool are_entries_equal(HNode *node1, HNode *node2);
 
 /**
  * Deletes (deallocates) an Entry.
+ * 
+ * For sorted set entries with greater th an or equal to LARGE_ZSET_SIZE pairs, the delete will happen asynchronously 
+ * using the thread pool workers.
  * 
  * @param entry         Pointer to the Entry to delete.
  * @param ttl_timers    Pointer to the TTL timers for entries in the kv store.

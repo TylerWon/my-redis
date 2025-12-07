@@ -34,16 +34,16 @@ std::unique_ptr<Response> CommandExecutor::do_set(const std::string &key, const 
 
     if (entry != NULL) {
         entry->str = value;
+        if (entry->ttl_timer.expiry_time_ms != 0) {
+            entry->ttl_timer.expiry_time_ms = 0;
+            ttl_timers->remove(&entry->ttl_timer.node, is_ttl_timer_less);
+        }
     } else {
         entry = new Entry();
         entry->key = key;
         entry->type = EntryType::STR;
         entry->str = value;
         entry->node.hval = str_hash(key);
-        if (entry->ttl_timer.expiry_time_ms != 0) {
-            entry->ttl_timer.expiry_time_ms = 0;
-            ttl_timers->remove(&entry->ttl_timer.node, is_ttl_timer_less);
-        }
         kv_store->insert(&entry->node);
     }
 
@@ -249,15 +249,50 @@ std::unique_ptr<Response> CommandExecutor::execute(const std::vector<std::string
         } else if (name == "zrank") {
             return do_zrank(command[1], command[2]); 
         } else if (name == "expire") {
-            return do_expire(command[1], std::stol(command[2]));
+            uint32_t seconds;
+            try {
+                seconds = std::stol(command[2]);
+            } catch (...) {
+                return std::make_unique<ErrResponse>(ErrResponse::ErrorCode::ERR_INVALID_ARG, "invalid seconds argument");
+            }
+
+            return do_expire(command[1], seconds);
         }
     } else if (command.size() == 4) {
         if (name == "zadd") {
-            return do_zadd(command[1], std::stod(command[2]), command[3]);
+            double score;
+            try {
+                score = std::stod(command[2]);
+            } catch (...) {
+                return std::make_unique<ErrResponse>(ErrResponse::ErrorCode::ERR_INVALID_ARG, "invalid score argument");
+            }
+
+            return do_zadd(command[1], score, command[3]);
         }
     } else if (command.size() == 6) {
         if (name == "zquery") {
-            return do_zquery(command[1], std::stod(command[2]), command[3], std::stol(command[4]), std::stoul(command[5]));
+            double score;
+            try {
+                score = std::stod(command[2]);
+            } catch (...) {
+                return std::make_unique<ErrResponse>(ErrResponse::ErrorCode::ERR_INVALID_ARG, "invalid score argument");
+            }
+
+            uint64_t offset;
+            try {
+                offset = std::stol(command[4]);
+            } catch (...) {
+                return std::make_unique<ErrResponse>(ErrResponse::ErrorCode::ERR_INVALID_ARG, "invalid offset argument");
+            }
+
+            uint64_t limit;
+            try {
+                limit = std::stod(command[5]);
+            } catch (...) {
+                return std::make_unique<ErrResponse>(ErrResponse::ErrorCode::ERR_INVALID_ARG, "invalid limit argument");
+            }
+            
+            return do_zquery(command[1], score, command[3], offset, limit);
         }
     }
     

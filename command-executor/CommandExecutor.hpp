@@ -56,6 +56,9 @@ class CommandExecutor {
         /**
          * Deletes the entry for the provided key in the kv store.
          * 
+         * For large sorted set entries, the delete will happen asynchronously so the entry may still exist briefly 
+         * after this function returns. 
+         * 
          * @param key   The key to delete.
          * 
          * @return  IntResponse: the number of keys removed.
@@ -143,7 +146,8 @@ class CommandExecutor {
          * @param name  The name of the pair to rank.
          * 
          * @return  One of the following:
-         *          - NilResponse: if the key does not exist or the pair does not exist in the sorted set.
+         *          - NilResponse: if the key does not exist, the key does not hold a sorted set, or the pair does not 
+         *            exist in the sorted set.
          *          - IntResponse: the rank of the pair.
          */
         std::unique_ptr<Response> do_zrank(const std::string &key, const std::string &name);
@@ -211,4 +215,13 @@ class CommandExecutor {
          * @return  Pointer to the Response for executing the command.
          */
         std::unique_ptr<Response> execute(const std::vector<std::string> &command);
+
+    #ifdef TEST_MODE
+    public:      
+        ~CommandExecutor() {
+            delete kv_store;
+            delete ttl_timers;
+            delete thread_pool;
+        }
+    #endif
 };
