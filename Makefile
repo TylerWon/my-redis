@@ -19,6 +19,8 @@ SERVER = server
 TEST_BIN := $(notdir $(TEST_SRC:.cpp=))
 
 # Rules
+all: $(CLIENT) $(SERVER) 
+
 $(CLIENT): $(CLIENT_OBJ) $(COMMON_OBJ)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
@@ -27,8 +29,6 @@ $(SERVER): $(SERVER_OBJ) $(COMMON_OBJ)
 
 $(TEST_BIN): %: $(TEST_OBJ) $(COMMON_OBJ)
 	$(CXX) $(CXXFLAGS) -o $@ $(filter %/$@.o,$(TEST_OBJ)) $(COMMON_OBJ)
-
-all: $(CLIENT) $(SERVER) 
 
 tests: $(TEST_BIN) 
 
