@@ -56,6 +56,6 @@ bool are_entries_equal(HNode *node1, HNode *node2);
  * 
  * @param entry         Pointer to the Entry to delete.
  * @param ttl_timers    Pointer to the TTL timers for entries in the kv store.
- * @param thread_pool   Pointer to the thread pool.
+ * @param thread_pool   Pointer to the thread pool used for asynchronous work.
  */
 void delete_entry(Entry *entry, MinHeap *ttl_timers, ThreadPool *thread_pool);
