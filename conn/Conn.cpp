@@ -6,17 +6,9 @@
 #include "../utils/log.hpp"
 
 void Conn::handle_send() {
-    int sent = send(fd, outgoing.data(), outgoing.size(), 0);
-    if (sent == -1 && errno == EAGAIN) {
-        log("connection %d not actually ready to send", fd);
+    if (send_data()) {
         return;
-    } else if (sent < 0) {
-        log("unexpected error when sending on connection %d", fd);
-        want_close = true;
-        return;
-    } 
-
-    outgoing.consume((uint32_t) sent);
+    }
 
     if (outgoing.size() == 0) {
         // nothing left to send for connection, change state from write to read 
@@ -63,6 +55,22 @@ void Conn::handle_close(std::vector<Conn *> &fd_to_conn, Queue &idle_timers) {
     idle_timers.remove(&idle_timer.node);
 
     log("closed connection %d", fd);
+}
+
+bool Conn::send_data() {
+    int sent = send(fd, outgoing.data(), outgoing.size(), 0);
+    if (sent == -1 && errno == EAGAIN) {
+        log("connection %d not actually ready to send", fd);
+        return false;
+    } else if (sent < 0) {
+        log("unexpected error when sending on connection %d", fd);
+        want_close = true;
+        return false;
+    } 
+
+    outgoing.consume((uint32_t) sent);
+
+    return true;
 }
 
 bool Conn::recv_data() {
