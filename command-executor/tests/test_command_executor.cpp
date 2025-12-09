@@ -198,7 +198,20 @@ void test_del_large_sorted_set_entry() {
 }
 
 void test_del_entry_with_ttl() {
-    // TODO: check ttl_timers is empty?
+    CommandExecutor *executor = create_executor();
+
+    executor->execute({"set", "name", "tyler"});
+    executor->execute({"expire", "name", "100"});
+
+    std::unique_ptr<Response> actual = executor->execute({"del", "name"});
+    std::unique_ptr<Response> expected = std::make_unique<IntResponse>(1);
+    assert_same(actual, expected);
+
+    actual = executor->execute({"get", "name"});
+    expected = std::make_unique<NilResponse>();
+    assert_same(actual, expected);
+
+    delete executor;
 }
 
 void test_keys_empty_store() {
