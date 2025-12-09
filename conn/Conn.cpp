@@ -48,7 +48,7 @@ void Conn::handle_recv_fn(HMap &kv_store, MinHeap &ttl_timers, ThreadPool &threa
 
     CommandExecutor cmd_executor(&kv_store, &ttl_timers, &thread_pool);
     while (Request *request = parse_request()) {
-        log("request from connection %d: %s", fd, request->to_string().data());
+        log("connection %d request: %s", fd, request->to_string().data());
 
         std::unique_ptr<Response> response = cmd_executor.execute(request->get_cmd());
         if (response->marshal(outgoing) == Response::MarshalStatus::RES_TOO_BIG) {
