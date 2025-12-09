@@ -6,7 +6,11 @@
 #include "../utils/log.hpp"
 
 void Conn::handle_send() {
-    if (send_data()) {
+    handle_send_fn(send);
+}
+
+void Conn::handle_send_fn(ssize_t (*send)(int fd, const void *buf, size_t n, int flags)) {
+    if (!send_data(send)) {
         return;
     }
 
@@ -17,8 +21,28 @@ void Conn::handle_send() {
     }
 }
 
+bool Conn::send_data(ssize_t (*send)(int fd, const void *buf, size_t n, int flags)) {
+    int sent = send(fd, outgoing.data(), outgoing.size(), 0);
+    if (sent == -1 && errno == EAGAIN) {
+        log("connection %d not actually ready to send", fd);
+        return false;
+    } else if (sent < 0) {
+        log("unexpected error when sending on connection %d", fd);
+        want_close = true;
+        return false;
+    } 
+
+    outgoing.consume((uint32_t) sent);
+
+    return true;
+}
+
 void Conn::handle_recv(HMap &kv_store, MinHeap &ttl_timers, ThreadPool &thread_pool) {
-    if (!recv_data()) {
+    handle_recv_fn(kv_store, ttl_timers, thread_pool, recv, send);
+}
+
+void Conn::handle_recv_fn(HMap &kv_store, MinHeap &ttl_timers, ThreadPool &thread_pool, ssize_t (*recv)(int fd, void *buf, size_t n, int flags), ssize_t (*send)(int fd, const void *buf, size_t n, int flags)) {
+    if (!recv_data(recv)) {
         return;
     }
 
@@ -44,36 +68,12 @@ void Conn::handle_recv(HMap &kv_store, MinHeap &ttl_timers, ThreadPool &thread_p
         // something to send for connection, change state from read to write
         want_read = false;
         want_write = true;
-        handle_send(); // The socket is likely ready to write in a request-response protocol, try to write it 
-                       // without waiting for the next iteration
+        handle_send_fn(send); // The socket is likely ready to write in a request-response protocol, try to write it 
+                              // without waiting for the next iteration
     }
 }
 
-void Conn::handle_close(std::vector<Conn *> &fd_to_conn, Queue &idle_timers) {
-    close(fd);
-    fd_to_conn[fd] = NULL;
-    idle_timers.remove(&idle_timer.node);
-
-    log("closed connection %d", fd);
-}
-
-bool Conn::send_data() {
-    int sent = send(fd, outgoing.data(), outgoing.size(), 0);
-    if (sent == -1 && errno == EAGAIN) {
-        log("connection %d not actually ready to send", fd);
-        return false;
-    } else if (sent < 0) {
-        log("unexpected error when sending on connection %d", fd);
-        want_close = true;
-        return false;
-    } 
-
-    outgoing.consume((uint32_t) sent);
-
-    return true;
-}
-
-bool Conn::recv_data() {
+bool Conn::recv_data(ssize_t (*recv)(int fd, void *buf, size_t n, int flags)) {
     char buf[64 * 1024]; // 64 KB, large size is to handle pipelined requests
     
     int recvd = recv(fd, buf, sizeof(buf), 0);
@@ -82,6 +82,7 @@ bool Conn::recv_data() {
         return false;
     } else if (recvd < 0) {
         log("unexpected error when receiving data for connection %d", fd);
+        want_close = true;
         return false;
     } else if (recvd == 0) {
         if (incoming.size() == 0) {
@@ -112,4 +113,12 @@ Request *Conn::parse_request() {
     incoming.consume(Request::HEADER_SIZE + (*request)->length());
 
     return (*request);
+}
+
+void Conn::handle_close(std::vector<Conn *> &fd_to_conn, Queue &idle_timers) {
+    close(fd);
+    fd_to_conn[fd] = NULL;
+    idle_timers.remove(&idle_timer.node);
+
+    log("closed connection %d", fd);
 }

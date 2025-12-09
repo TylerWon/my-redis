@@ -1,6 +1,9 @@
 #include "../buffer/Buffer.hpp"
+#include "../hashmap/HMap.hpp"
+#include "../min-heap/MinHeap.hpp"
 #include "../request/Request.hpp"
 #include "../timers/IdleTimer.hpp"
+#include "../thread-pool/ThreadPool.hpp"
 
 /* Client connection to the server */
 class Conn {
@@ -32,7 +35,7 @@ class Conn {
         /**
          * Handles when data is ready to be received on the connection.
          * 
-         * Receives data on the socket, saving it to the incoming buffer. If requests can be parsed from the incoming
+         * Receives data on the socket, saving it to the incoming buffer. While requests can be parsed from the incoming
          * buffer, exceutes the commands contained in the requests. Lastly, switches the connection's intention to 
          * "write" if there is data in the outgoing buffer to prevent the connection from always reading.
          * 
@@ -47,7 +50,8 @@ class Conn {
         /**
          * Handles when the connection should be closed.
          * 
-         * Removes the idle timer for the connection and the connection itself from the map of all active connections.
+         * Closes the socket, removes the idle timer for the connection, and the connection itself from the map of all 
+         * active connections.
          * 
          * @param fd_to_conn    Reference to the map of all active connections, indexed by fd.
          * @param idle_timers   Reference to the idle timers for active connections.
@@ -59,29 +63,62 @@ class Conn {
          * 
          * Sets the connection's intention to "close" if an error occurs.
          * 
+         * @param send  Function to use for sending data over the socket.
+         * 
          * @return  True if data is sent successfully.
          *          False if the socket isn't ready or an error occurs.
          */
-        bool send_data();
+        bool send_data(ssize_t (*send)(int fd, const void *buf, size_t n, int flags));
 
         /**
          * Receives data over the connection, storing it in the incoming buffer.
          * 
-         * Sets the connection's intention to "close" if the peer terminated the connection.
+         * Sets the connection's intention to "close" if an unexpected error occurred or the peer terminated the 
+         * connection.
+         * 
+         * @param recv  Function to use for receiving data over the socket.
          * 
          * @return  True if data is received successfully.
          *          False if socket isn't ready, an error occurs, or the peer terminated the connection.
          */
-        bool recv_data();
+        bool recv_data(ssize_t (*recv)(int fd, void *buf, size_t n, int flags));
 
         /**
          * Tries to parse a request from the incoming buffer, removing it from the buffer afterwards.
          * 
-         * If a request can be parsed from the buffer but it exceeds the size limit, sets the connection's 
-         * intention to "close".
+         * If the parsed request exceeds the size limit, the connection's intention is set to "close".
          * 
          * @return  Pointer to the Request on success.
          *          NULL if request cannot be parsed.
          */
         Request *parse_request();
+    
+    #ifdef TEST_MODE
+    public:      
+    #else
+    private:
+    #endif
+        /**
+         * Logic for handle_send(). 
+         * 
+         * Accepts a function for sending data over the socket. This allows the send to be mocked which improves 
+         * testability.
+         * 
+         * @param send  Function to use for sending data over the socket.
+         */
+        void handle_send_fn(ssize_t (*send)(int fd, const void *buf, size_t n, int flags));
+
+        /**
+         * Logic for handle_recv(). 
+         * 
+         * In addition to the parameters for handle_recv(), accepts functions for sending and receiving data over the 
+         * socket. This allows the receive to be mocked which improves testability.
+         * 
+         * @param kv_store      Reference to the kv store.
+         * @param ttl_timers    Reference to the TTL timers for entries in the kv store.
+         * @param thread_pool   Reference to the thread pool used for asynchronous work.
+         * @param recv          Function to use for receiving data over the socket.
+         * @param send          Function to use for sending data over the socket.
+         */
+        void handle_recv_fn(HMap &kv_store, MinHeap &ttl_timers, ThreadPool &thread_pool, ssize_t (*recv)(int fd, void *buf, size_t n, int flags), ssize_t (*send)(int fd, const void *buf, size_t n, int flags));
 };
