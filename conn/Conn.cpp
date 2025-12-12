@@ -117,8 +117,8 @@ Request *Conn::parse_request() {
 
 void Conn::handle_close(std::vector<Conn *> &fd_to_conn, Queue &idle_timers) {
     close(fd);
+    idle_timer.clear_expiry(&idle_timers);
     fd_to_conn[fd] = NULL;
-    idle_timers.remove(&idle_timer.node);
 
     log("closed connection %d", fd);
 }

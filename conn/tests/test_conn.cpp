@@ -329,7 +329,7 @@ void test_handle_close() {
     std::vector<Conn *> fd_to_conn(conn.fd + 1);
     Queue idle_timers;
     fd_to_conn[conn.fd] = &conn; // insert Conn at index fd
-    idle_timers.push(&conn.idle_timer.node);
+    conn.idle_timer.set_expiry(&idle_timers);
 
     conn.handle_close(fd_to_conn, idle_timers);
 

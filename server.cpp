@@ -186,29 +186,15 @@ void handle_new_connection(int listener) {
     }
 
     Conn *conn = new Conn(client, true, false, false);
+    conn->idle_timer.set_expiry(&idle_timers);
 
     if (fd_to_conn.size() < (uint32_t) conn->fd) {
         fd_to_conn.resize(conn->fd + 1);
     }
 
     fd_to_conn[conn->fd] = conn;
-    idle_timers.push(&conn->idle_timer.node);
 
     log("new connection %d", client);
-}
-
-/**
- * Resets the expiry time of an idle timer.
- * 
- * Since its expiry time is reset, the timer is also moved to the end of the idle timer queue as it will now expire the 
- * latest.
- * 
- * @param timer The timer to reset.
- */
-void reset_idle_timer(IdleTimer *timer) {
-    timer->reset();
-    idle_timers.remove(&timer->node);
-    idle_timers.push(&timer->node);
 }
 
 /**
@@ -278,7 +264,7 @@ int main() {
             }
     
             Conn *conn = fd_to_conn[pollfds[i].fd];
-            reset_idle_timer(&conn->idle_timer);
+            conn->idle_timer.set_expiry(&idle_timers);
 
             if (revents & POLLIN) {
                 conn->handle_recv(kv_store, ttl_timers, thread_pool);
