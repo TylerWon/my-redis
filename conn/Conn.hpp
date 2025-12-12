@@ -1,3 +1,5 @@
+#pragma once
+
 #include "../buffer/Buffer.hpp"
 #include "../hashmap/HMap.hpp"
 #include "../min-heap/MinHeap.hpp"

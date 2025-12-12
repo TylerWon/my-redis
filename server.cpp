@@ -6,6 +6,7 @@
 #include "command-executor/CommandExecutor.hpp"
 #include "conn/Conn.hpp"
 #include "constants.hpp"
+#include "timers/TimerManager.hpp"
 #include "utils/intrusive_data_structure_utils.hpp"
 #include "utils/log.hpp"
 #include "utils/time_utils.hpp"
@@ -13,8 +14,7 @@
 HMap kv_store; // key-value store
 std::vector<Conn *> fd_to_conn; // map of all client connections, indexed by fd
 std::vector<struct pollfd> pollfds; // array of pollfds for poll()
-Queue idle_timers; // idle timers for active connections, timer closest to expiring is at the front of the queue
-MinHeap ttl_timers; // ttl timers for entries in the kv store, timer closest to expiring is at the root of the heap
+TimerManager timers; // manages idle timers for connections and TTL timers for kv store entries
 ThreadPool thread_pool(4); // pool of worker threads for executing asynchronous tasks
 
 /**
@@ -106,40 +106,6 @@ void init_pollfds(int listener) {
     }
 }
 
-/**
- * Gets the time until the next timer expires.
- * 
- * @return  The time until the next timer expires.
- *          0 if the next timer has already expired.
- *          -1 if there are no active timers.
- */
-int32_t get_time_until_timeout() {
-    time_t next_timeout_ms = -1;
-    time_t now_ms = get_time_ms();
-
-    if (!idle_timers.is_empty()) {
-        QNode *node = idle_timers.front();
-        IdleTimer *timer = container_of(node, IdleTimer, node);
-        next_timeout_ms = timer->expiry_time_ms;
-    }
-
-    if (!ttl_timers.is_empty()) {
-        MHNode *node = ttl_timers.min();
-        TTLTimer *timer = container_of(node, TTLTimer, node);
-        if (next_timeout_ms == -1 || timer->expiry_time_ms < next_timeout_ms) {
-            next_timeout_ms = timer->expiry_time_ms;
-        }
-    }
-
-    if (next_timeout_ms == -1) {
-        return -1;
-    } else if (now_ms >= next_timeout_ms) {
-        return 0;
-    }
-
-    return next_timeout_ms - now_ms;
-}
-
 /** 
  * Sets a socket so that it is non-blocking.
  * 
@@ -186,7 +152,7 @@ void handle_new_connection(int listener) {
     }
 
     Conn *conn = new Conn(client, true, false, false);
-    conn->idle_timer.set_expiry(&idle_timers);
+    conn->idle_timer.set_expiry(&timers.idle_timers);
 
     if (fd_to_conn.size() < (uint32_t) conn->fd) {
         fd_to_conn.resize(conn->fd + 1);
@@ -195,40 +161,6 @@ void handle_new_connection(int listener) {
     fd_to_conn[conn->fd] = conn;
 
     log("new connection %d", client);
-}
-
-/**
- * Checks the idle and TTL timers to see if any have expired.
- * 
- * If a timer has expired, the associated connection/entry is removed.
- */
-void process_timers() {
-    time_t now_ms = get_time_ms();
-    while (!idle_timers.is_empty()) {
-        QNode *node = idle_timers.front();
-        IdleTimer *timer = container_of(node, IdleTimer, node);
-        if (timer->expiry_time_ms > now_ms) {
-            break;
-        }
-        Conn *conn = container_of(timer, Conn, idle_timer);
-        log("connection %d exceeded idle timeout", conn->fd);
-        conn->handle_close(fd_to_conn, idle_timers);
-    }
-
-    const uint32_t MAX_EXPIRATIONS = 1000;
-    uint32_t count = 0;
-    while (!ttl_timers.is_empty() && count < MAX_EXPIRATIONS) {
-        MHNode *node = ttl_timers.min();
-        TTLTimer *timer = container_of(node, TTLTimer, node);
-        if (timer->expiry_time_ms > now_ms) {
-            break;
-        }
-        Entry *entry = container_of(timer, Entry, ttl_timer);
-        log("key \'%s\' expired", entry->key.data());
-        kv_store.remove(&entry->node, are_entries_equal);
-        delete_entry(entry, &ttl_timers, &thread_pool);
-        count++;
-    }
 }
 
 int main() {
@@ -248,7 +180,7 @@ int main() {
     while (true) {
         init_pollfds(listener);
 
-        if (poll(pollfds.data(), pollfds.size(), get_time_until_timeout()) == -1) {
+        if (poll(pollfds.data(), pollfds.size(), timers.get_time_until_expiry()) == -1) {
             fatal("failed to poll");
         }
 
@@ -264,10 +196,10 @@ int main() {
             }
     
             Conn *conn = fd_to_conn[pollfds[i].fd];
-            conn->idle_timer.set_expiry(&idle_timers);
+            conn->idle_timer.set_expiry(&timers.idle_timers);
 
             if (revents & POLLIN) {
-                conn->handle_recv(kv_store, ttl_timers, thread_pool);
+                conn->handle_recv(kv_store, timers.ttl_timers, thread_pool);
             }
 
             if (revents & POLLOUT) {
@@ -275,10 +207,10 @@ int main() {
             }
 
             if (revents & POLLERR || conn->want_close) {
-                conn->handle_close(fd_to_conn, idle_timers);
+                conn->handle_close(fd_to_conn, timers.idle_timers);
             }
         }
 
-        process_timers();
+        timers.process_timers(kv_store, fd_to_conn, thread_pool);
     }
 }
