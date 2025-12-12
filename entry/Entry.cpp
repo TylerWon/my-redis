@@ -17,9 +17,7 @@ void delete_entry_func(void *arg) {
 
 void delete_entry(Entry *entry, MinHeap *ttl_timers, ThreadPool *thread_pool) {
     TTLTimer *timer = &entry->ttl_timer;
-    if (timer->expiry_time_ms != 0) {
-        ttl_timers->remove(&entry->ttl_timer.node, is_ttl_timer_less);
-    }
+    timer->clear_expiry(ttl_timers);
 
     if (entry->type == EntryType::SORTED_SET) {
         if (entry->zset.length() >= LARGE_ZSET_SIZE) {

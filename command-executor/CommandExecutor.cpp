@@ -38,10 +38,7 @@ std::unique_ptr<Response> CommandExecutor::do_set(const std::string &key, const 
 
     if (entry != NULL) {
         entry->str = value;
-        if (entry->ttl_timer.expiry_time_ms != 0) {
-            entry->ttl_timer.expiry_time_ms = 0;
-            ttl_timers->remove(&entry->ttl_timer.node, is_ttl_timer_less);
-        }
+        entry->ttl_timer.clear_expiry(ttl_timers);
         log("set: updated key '%s'", key.data());
     } else {
         entry = new Entry();
@@ -211,15 +208,7 @@ std::unique_ptr<Response> CommandExecutor::do_expire(const std::string &key, tim
         return std::make_unique<IntResponse>(0);
     }
 
-    TTLTimer *timer = &entry->ttl_timer;
-    time_t old_expiry_time = timer->expiry_time_ms;
-    timer->expiry_time_ms = get_time_ms() + seconds * 1000;
-    if (old_expiry_time == 0) {
-        ttl_timers->insert(&timer->node, is_ttl_timer_less);
-    } else {
-        ttl_timers->update(&timer->node, is_ttl_timer_less);
-    }
-
+    entry->ttl_timer.set_expiry(seconds, ttl_timers);
     log("expire: set TTL of key '%s' to %d", key.data(), seconds);
     return std::make_unique<IntResponse>(1);
 }
@@ -232,7 +221,7 @@ std::unique_ptr<Response> CommandExecutor::do_ttl(const std::string &key) {
     }
 
     TTLTimer *timer = &entry->ttl_timer;
-    if (timer->expiry_time_ms == 0) {
+    if (!timer->is_expiry_set()) {
         log("ttl: key '%s' doesn't have a TTL", key.data());
         return std::make_unique<IntResponse>(-1);
     }
@@ -250,13 +239,12 @@ std::unique_ptr<Response> CommandExecutor::do_persist(const std::string &key) {
     }
 
     TTLTimer *timer = &entry->ttl_timer;
-    if (timer->expiry_time_ms == 0) {
+    if (!timer->is_expiry_set()) {
         log("persist: key '%s' doesn't have a TTL", key.data());
         return std::make_unique<IntResponse>(0);
     }
 
-    ttl_timers->remove(&timer->node, is_ttl_timer_less);
-    timer->expiry_time_ms = 0;
+    timer->clear_expiry(ttl_timers);
     log("persist: removed TTL for key '%s'", key.data());
     return std::make_unique<IntResponse>(1);
 }
