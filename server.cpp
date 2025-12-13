@@ -152,7 +152,7 @@ void handle_new_connection(int listener) {
     }
 
     Conn *conn = new Conn(client, true, false, false);
-    conn->idle_timer.set_expiry(&timers.idle_timers);
+    conn->idle_timer.set_expiry(&timers);
 
     if (fd_to_conn.size() < (uint32_t) conn->fd) {
         fd_to_conn.resize(conn->fd + 1);
@@ -196,7 +196,7 @@ int main() {
             }
     
             Conn *conn = fd_to_conn[pollfds[i].fd];
-            conn->idle_timer.set_expiry(&timers.idle_timers);
+            conn->idle_timer.set_expiry(&timers);
 
             if (revents & POLLIN) {
                 conn->handle_recv(kv_store, timers.ttl_timers, thread_pool);
@@ -207,7 +207,7 @@ int main() {
             }
 
             if (revents & POLLERR || conn->want_close) {
-                conn->handle_close(fd_to_conn, timers.idle_timers);
+                conn->handle_close(fd_to_conn, &timers);
             }
         }
 

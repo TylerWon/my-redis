@@ -52,13 +52,13 @@ class Conn {
         /**
          * Handles when the connection should be closed.
          * 
-         * Closes the socket, removes the idle timer for the connection, and the connection itself from the map of all 
+         * Closes the socket, clears the idle timer for the connection, and the connection itself from the map of all 
          * active connections.
          * 
          * @param fd_to_conn    Reference to the map of all active connections, indexed by fd.
-         * @param idle_timers   Reference to the idle timers for active connections.
+         * @param timers        Pointer to the timer manager.
          */
-        void handle_close(std::vector<Conn *> &fd_to_conn, Queue &idle_timers);
+        void handle_close(std::vector<Conn *> &fd_to_conn, TimerManager *timers);
     private:
         /**
          * Sends data over the connection, removing it from the outgoing buffer afterwards.

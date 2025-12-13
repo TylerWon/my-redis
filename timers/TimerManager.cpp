@@ -1,6 +1,7 @@
 #include "IdleTimer.hpp"
 #include "TimerManager.hpp"
 #include "TTLTimer.hpp"
+#include "../conn/Conn.hpp"
 #include "../entry/Entry.hpp"
 #include "../utils/intrusive_data_structure_utils.hpp"
 #include "../utils/log.hpp"
@@ -43,7 +44,7 @@ void TimerManager::process_timers(HMap &kv_store, std::vector<Conn *> &fd_to_con
         }
         Conn *conn = container_of(timer, Conn, idle_timer);
         log("connection %d exceeded idle timeout", conn->fd);
-        conn->handle_close(fd_to_conn, idle_timers);
+        conn->handle_close(fd_to_conn, this);
     }
 
     const uint32_t MAX_EXPIRATIONS = 1000;
@@ -60,4 +61,17 @@ void TimerManager::process_timers(HMap &kv_store, std::vector<Conn *> &fd_to_con
         delete_entry(entry, &ttl_timers, &thread_pool);
         count++;
     }
+}
+
+void TimerManager::add(IdleTimer *timer) {
+    idle_timers.push(&timer->node);
+}
+
+void TimerManager::update(IdleTimer *timer) {
+    idle_timers.remove(&timer->node);
+    idle_timers.push(&timer->node);
+}
+
+void TimerManager::remove(IdleTimer *timer) {
+    idle_timers.remove(&timer->node);
 }

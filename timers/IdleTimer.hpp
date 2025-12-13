@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <ctime>
 
+#include "TimerManager.hpp"
 #include "../queue/Queue.hpp"
 
 /**
@@ -23,17 +24,17 @@ class IdleTimer {
         QNode node;
 
         /**
-         * Sets the expiry of the timer and adds it to the queue of active idle timers. If the timer is already in the
-         * queue, updates its position in the queue instead.
+         * Sets the expiry of the timer and adds it to the timer manager. If the timer is already managed by the timer 
+         * manager, tells the manager that the timer's expiry has been updated.
          * 
-         * @param idle_timers   Pointer to the idle timers for active connections.
+         * @param timers    Pointer to the timer manager.
          */
-        void set_expiry(Queue *idle_timers);
+        void set_expiry(TimerManager *timers);
 
         /**
-         * Clears the expiry of the timer and removes it from the queue of active idle timers if set.
+         * Clears the expiry of the timer and removes it from the timer manager. Only does this if the expiry is set.
          * 
-         * @param idle_timers   Pointer to the idle timers for active connections.
+         * @param timers    Pointer to the timer manager.
          */
-        void clear_expiry(Queue *idle_timers);
+        void clear_expiry(TimerManager *timers);
 };

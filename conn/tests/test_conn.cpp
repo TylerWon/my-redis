@@ -327,14 +327,14 @@ void test_handle_recv_multiple_requests() {
 void test_handle_close() {
     Conn conn(10, true, false, false);
     std::vector<Conn *> fd_to_conn(conn.fd + 1);
-    Queue idle_timers;
+    TimerManager timers;
     fd_to_conn[conn.fd] = &conn; // insert Conn at index fd
-    conn.idle_timer.set_expiry(&idle_timers);
+    conn.idle_timer.set_expiry(&timers);
 
-    conn.handle_close(fd_to_conn, idle_timers);
+    conn.handle_close(fd_to_conn, &timers);
 
     assert(fd_to_conn[conn.fd] == NULL);
-    assert(idle_timers.is_empty() == true);
+    assert(timers.idle_timers.is_empty() == true);
 }
 
 int main() {

@@ -1,15 +1,21 @@
-#include "../conn/Conn.hpp"
+#pragma once
+
+#include <vector>
 #include "../hashmap/HMap.hpp"
 #include "../min-heap/MinHeap.hpp"
 #include "../queue/Queue.hpp"
 #include "../thread-pool/ThreadPool.hpp"
 
-/* Manages idle timers for connections and TTL timers for kv store entries */
+// Forward declarations to break circular dependency
+class Conn;
+class IdleTimer;
+
+/* Manages expirations of idle connection timers and TTL timers for kv store entries */
 class TimerManager {
     private:
         static const uint16_t MAX_TTL_EXPIRATIONS = 1000;
     public:
-        Queue idle_timers;
+        Queue idle_timers; // can use a queue because idle timers have a fixed timeout value
         MinHeap ttl_timers;
     
         /**
@@ -31,4 +37,13 @@ class TimerManager {
          * @param thread_pool   Reference to the thread pool used for asynchronous work.
          */
         void process_timers(HMap &kv_store, std::vector<Conn *> &fd_to_conn, ThreadPool &thread_pool);
+
+        /* Adds an idle timer to be managed by the TimerManager */
+        void add(IdleTimer *timer);
+
+        /* Updates the position of the idle timer in the expiration order */
+        void update(IdleTimer *timer);
+
+        /* Removes an idle timer from being managed by the TimerManager */
+        void remove(IdleTimer *timer);
 };

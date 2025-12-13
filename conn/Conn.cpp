@@ -115,9 +115,9 @@ Request *Conn::parse_request() {
     return (*request);
 }
 
-void Conn::handle_close(std::vector<Conn *> &fd_to_conn, Queue &idle_timers) {
+void Conn::handle_close(std::vector<Conn *> &fd_to_conn, TimerManager *timers) {
     close(fd);
-    idle_timer.clear_expiry(&idle_timers);
+    idle_timer.clear_expiry(timers);
     fd_to_conn[fd] = NULL;
 
     log("closed connection %d", fd);
