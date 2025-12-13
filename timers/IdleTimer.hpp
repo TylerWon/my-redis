@@ -7,7 +7,7 @@
 #include "../queue/Queue.hpp"
 
 /**
- * A timer to track the idleness of a connection. Timers of this type have a fixed timeout value.
+ * A timer to track the idleness of a connection.
  * 
  * Once the expiry time is exceeded, the connection associated with the timer has been idle for too long and should be 
  * removed.
@@ -26,6 +26,8 @@ class IdleTimer {
         /**
          * Sets the expiry of the timer and adds it to the timer manager. If the timer is already managed by the timer 
          * manager, tells the manager that the timer's expiry has been updated.
+         * 
+         * Since idle timers have a fixed timeout value, a timeout parameter is unnecessary.
          * 
          * @param timers    Pointer to the timer manager.
          */
