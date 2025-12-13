@@ -16,9 +16,9 @@
  */
 CommandExecutor *create_executor() {
     HMap *kv_store = new HMap();
-    MinHeap *ttl_timers = new MinHeap();
+    TimerManager *timers = new TimerManager();
     ThreadPool *thread_pool = new ThreadPool(4);
-    return new CommandExecutor(kv_store, ttl_timers, thread_pool);
+    return new CommandExecutor(kv_store, timers, thread_pool);
 }
 
 /* Asserts if two Responses are the same. */

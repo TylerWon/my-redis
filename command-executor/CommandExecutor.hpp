@@ -13,7 +13,7 @@
 class CommandExecutor {
     private:
         HMap *kv_store;
-        MinHeap *ttl_timers;
+        TimerManager *timers;
         ThreadPool *thread_pool;
         
         /**
@@ -190,8 +190,8 @@ class CommandExecutor {
          */
         std::unique_ptr<Response> do_persist(const std::string &key);
     public:
-        /* Initializes a CommandExecutor, storing references to the kv store, TTL timers, and thread pool */
-        CommandExecutor(HMap *kv_store, MinHeap *ttl_timers, ThreadPool *thread_pool) : kv_store(kv_store), ttl_timers(ttl_timers), thread_pool(thread_pool) {};
+        /* Initializes a CommandExecutor, storing references to the kv store, timer manager, and thread pool */
+        CommandExecutor(HMap *kv_store, TimerManager *timers, ThreadPool *thread_pool) : kv_store(kv_store), timers(timers), thread_pool(thread_pool) {};
 
         /**
          * Executes the given command.
@@ -220,7 +220,7 @@ class CommandExecutor {
     public:      
         ~CommandExecutor() {
             delete kv_store;
-            delete ttl_timers;
+            delete timers;
             delete thread_pool;
         }
     #endif

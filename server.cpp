@@ -199,7 +199,7 @@ int main() {
             conn->idle_timer.set_expiry(&timers);
 
             if (revents & POLLIN) {
-                conn->handle_recv(kv_store, timers.ttl_timers, thread_pool);
+                conn->handle_recv(kv_store, timers, thread_pool);
             }
 
             if (revents & POLLOUT) {

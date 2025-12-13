@@ -38,7 +38,7 @@ std::unique_ptr<Response> CommandExecutor::do_set(const std::string &key, const 
 
     if (entry != NULL) {
         entry->str = value;
-        entry->ttl_timer.clear_expiry(ttl_timers);
+        entry->ttl_timer.clear_expiry(timers);
         log("set: updated key '%s'", key.data());
     } else {
         entry = new Entry();
@@ -60,7 +60,7 @@ std::unique_ptr<Response> CommandExecutor::do_del(const std::string &key) {
     HNode *node = kv_store->remove(&lookup_entry.node, are_entries_equal);
     
     if (node != NULL) {
-        delete_entry(container_of(node, Entry, node), ttl_timers, thread_pool);
+        delete_entry(container_of(node, Entry, node), timers, thread_pool);
         log("del: deleted key '%s'", key.data());
         return std::make_unique<IntResponse>(1);
     }
@@ -208,7 +208,7 @@ std::unique_ptr<Response> CommandExecutor::do_expire(const std::string &key, tim
         return std::make_unique<IntResponse>(0);
     }
 
-    entry->ttl_timer.set_expiry(seconds, ttl_timers);
+    entry->ttl_timer.set_expiry(seconds, timers);
     log("expire: set TTL of key '%s' to %d", key.data(), seconds);
     return std::make_unique<IntResponse>(1);
 }
@@ -244,7 +244,7 @@ std::unique_ptr<Response> CommandExecutor::do_persist(const std::string &key) {
         return std::make_unique<IntResponse>(0);
     }
 
-    timer->clear_expiry(ttl_timers);
+    timer->clear_expiry(timers);
     log("persist: removed TTL for key '%s'", key.data());
     return std::make_unique<IntResponse>(1);
 }

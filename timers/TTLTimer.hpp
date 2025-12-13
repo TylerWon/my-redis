@@ -2,6 +2,7 @@
 
 #include <ctime>
 
+#include "TimerManager.hpp"
 #include "../min-heap/MinHeap.hpp"
 
 /**
@@ -17,20 +18,20 @@ class TTLTimer {
         MHNode node;
 
         /** 
-         * Sets the expiry of the timer and adds it to the min heap of active TTL timers. If the timer is already in the 
-         * heap, updates its position in the heap instead.
+         * Sets the expiry of the timer and adds it to the timer manager. If the timer is already managed by the timer 
+         * manager, tells the manager that the timer's expiry has been updated.
          * 
-         * @param seconds       The expiry timeout in seconds.
-         * @param ttl_timers    Pointer to the TTL timers for entries in the kv store.
+         * @param seconds   The expiry timeout in seconds.
+         * @param timers    Pointer to the timer manager.
          */
-        void set_expiry(time_t seconds, MinHeap *ttl_timers);
+        void set_expiry(time_t seconds, TimerManager *timers);
 
         /**
-         * Clears the expiry for the timer and removes it from the min heap of active TTL timers if set.
+         * Clears the expiry of the timer and removes it from the timer manager. Only does this if the expiry is set.
          * 
-         * @param ttl_timers    Pointer to the TTL timers for entries in the kv store.
+         * @param timers    Pointer to the timer manager.
          */
-        void clear_expiry(MinHeap *ttl_timers);
+        void clear_expiry(TimerManager *timers);
 
         /* Checks if the timer's expiry is set */
         bool is_expiry_set();

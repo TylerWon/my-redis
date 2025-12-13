@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+
 #include "../hashmap/HMap.hpp"
 #include "../min-heap/MinHeap.hpp"
 #include "../queue/Queue.hpp"
@@ -9,6 +10,7 @@
 // Forward declarations to break circular dependency
 class Conn;
 class IdleTimer;
+class TTLTimer;
 
 /* Manages expirations of idle connection timers and TTL timers for kv store entries */
 class TimerManager {
@@ -41,9 +43,18 @@ class TimerManager {
         /* Adds an idle timer to be managed by the TimerManager */
         void add(IdleTimer *timer);
 
-        /* Updates the position of the idle timer in the expiration order */
+        /* Updates the position of an idle timer in the expiration order */
         void update(IdleTimer *timer);
 
         /* Removes an idle timer from being managed by the TimerManager */
         void remove(IdleTimer *timer);
+
+        /* Adds a TTL timer to be managed by the TimerManager */
+        void add(TTLTimer *timer);
+
+        /* Updates the position of a TTL timer in the expiration order */
+        void update(TTLTimer *timer);
+
+        /* Removes a TTL timer from being managed by the TimerManager */
+        void remove(TTLTimer *timer);
 };

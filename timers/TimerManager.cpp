@@ -7,6 +7,21 @@
 #include "../utils/log.hpp"
 #include "../utils/time_utils.hpp"
 
+/**
+ * Callback which checks if one TTLTimer is less than another in a MinHeap.
+ * 
+ * @param node1 The MHNode contained by the first TTLTimer.
+ * @param node2 The MHNode contained by the second TTLTimer.
+ * 
+ * @return  True if the first TTLTimer is less than the second TTLTimer.
+ *          False otherwise.
+ */
+bool is_ttl_timer_less(MHNode *node1, MHNode *node2) {
+    TTLTimer *timer1 = container_of(node1, TTLTimer, node);
+    TTLTimer *timer2 = container_of(node2, TTLTimer, node);
+    return timer1->expiry_time_ms < timer2->expiry_time_ms;
+}
+
 int32_t TimerManager::get_time_until_expiry() {
     time_t next_expiry_ms = -1;
     time_t now_ms = get_time_ms();
@@ -58,7 +73,7 @@ void TimerManager::process_timers(HMap &kv_store, std::vector<Conn *> &fd_to_con
         Entry *entry = container_of(timer, Entry, ttl_timer);
         log("key '%s' expired", entry->key.data());
         kv_store.remove(&entry->node, are_entries_equal);
-        delete_entry(entry, &ttl_timers, &thread_pool);
+        delete_entry(entry, this, &thread_pool);
         count++;
     }
 }
@@ -74,4 +89,16 @@ void TimerManager::update(IdleTimer *timer) {
 
 void TimerManager::remove(IdleTimer *timer) {
     idle_timers.remove(&timer->node);
+}
+
+void TimerManager::add(TTLTimer *timer) {
+    ttl_timers.insert(&timer->node, is_ttl_timer_less);
+}
+
+void TimerManager::update(TTLTimer *timer) {
+    ttl_timers.update(&timer->node, is_ttl_timer_less);
+}
+
+void TimerManager::remove(TTLTimer *timer) {
+    ttl_timers.remove(&timer->node, is_ttl_timer_less);
 }

@@ -44,10 +44,10 @@ class Conn {
          * If something goes wrong while receiving the data, returns early.
          * 
          * @param kv_store      Reference to the kv store.
-         * @param ttl_timers    Reference to the TTL timers for entries in the kv store.
+         * @param timers        Reference to the timer manager.
          * @param thread_pool   Reference to the thread pool used for asynchronous work.
          */
-        void handle_recv(HMap &kv_store, MinHeap &ttl_timers, ThreadPool &thread_pool);
+        void handle_recv(HMap &kv_store, TimerManager &timers, ThreadPool &thread_pool);
 
         /**
          * Handles when the connection should be closed.
@@ -117,10 +117,10 @@ class Conn {
          * socket. This allows the receive to be mocked which improves testability.
          * 
          * @param kv_store      Reference to the kv store.
-         * @param ttl_timers    Reference to the TTL timers for entries in the kv store.
+         * @param timers        Reference to the timer manager.
          * @param thread_pool   Reference to the thread pool used for asynchronous work.
          * @param recv          Function to use for receiving data over the socket.
          * @param send          Function to use for sending data over the socket.
          */
-        void handle_recv_fn(HMap &kv_store, MinHeap &ttl_timers, ThreadPool &thread_pool, ssize_t (*recv)(int fd, void *buf, size_t n, int flags), ssize_t (*send)(int fd, const void *buf, size_t n, int flags));
+        void handle_recv_fn(HMap &kv_store, TimerManager &timers, ThreadPool &thread_pool, ssize_t (*recv)(int fd, void *buf, size_t n, int flags), ssize_t (*send)(int fd, const void *buf, size_t n, int flags));
 };

@@ -224,11 +224,11 @@ void test_handle_send_some_data_sent()  {
 
 void test_handle_recv_socket_not_ready() {
     HMap kv_store;
-    MinHeap ttl_timers;
+    TimerManager timers;
     ThreadPool thread_pool(4);
     Conn conn(10, true, false, false);
 
-    conn.handle_recv_fn(kv_store, ttl_timers, thread_pool, recv_test_handle_recv_socket_not_ready, send);
+    conn.handle_recv_fn(kv_store, timers, thread_pool, recv_test_handle_recv_socket_not_ready, send);
 
     assert(conn.incoming.size() == 0);
     assert(conn.want_read == true);
@@ -238,11 +238,11 @@ void test_handle_recv_socket_not_ready() {
 
 void test_handle_recv_unexpected_error() {
     HMap kv_store;
-    MinHeap ttl_timers;
+    TimerManager timers;
     ThreadPool thread_pool(4);
     Conn conn(10, true, false, false);
 
-    conn.handle_recv_fn(kv_store, ttl_timers, thread_pool, recv_test_handle_recv_unexpected_error, send);
+    conn.handle_recv_fn(kv_store, timers, thread_pool, recv_test_handle_recv_unexpected_error, send);
 
     assert(conn.incoming.size() == 0);
     assert(conn.want_read == true);
@@ -252,11 +252,11 @@ void test_handle_recv_unexpected_error() {
 
 void test_handle_recv_peer_terminated_connection() {
     HMap kv_store;
-    MinHeap ttl_timers;
+    TimerManager timers;
     ThreadPool thread_pool(4);
     Conn conn(10, true, false, false);
 
-    conn.handle_recv_fn(kv_store, ttl_timers, thread_pool, recv_test_handle_recv_peer_terminated_connection, send);
+    conn.handle_recv_fn(kv_store, timers, thread_pool, recv_test_handle_recv_peer_terminated_connection, send);
 
     assert(conn.incoming.size() == 0);
     assert(conn.want_read == true);
@@ -266,11 +266,11 @@ void test_handle_recv_peer_terminated_connection() {
 
 void test_handle_recv_request_too_big() {
     HMap kv_store;
-    MinHeap ttl_timers;
+    TimerManager timers;
     ThreadPool thread_pool(4);
     Conn conn(10, true, false, false);
 
-    conn.handle_recv_fn(kv_store, ttl_timers, thread_pool, recv_test_handle_recv_request_too_big, send);
+    conn.handle_recv_fn(kv_store, timers, thread_pool, recv_test_handle_recv_request_too_big, send);
 
     assert(conn.incoming.size() == Request::HEADER_SIZE + Request::MAX_LEN + 1);
     assert(conn.want_read == true);
@@ -280,11 +280,11 @@ void test_handle_recv_request_too_big() {
 
 void test_handle_recv_incomplete_request() {
     HMap kv_store;
-    MinHeap ttl_timers;
+    TimerManager timers;
     ThreadPool thread_pool(4);
     Conn conn(10, true, false, false);
 
-    conn.handle_recv_fn(kv_store, ttl_timers, thread_pool, recv_test_handle_recv_incomplete_request, send);
+    conn.handle_recv_fn(kv_store, timers, thread_pool, recv_test_handle_recv_incomplete_request, send);
 
     assert(conn.incoming.size() == Request::HEADER_SIZE + test_request1.length() - 10);
     assert(conn.want_read == true);
@@ -294,11 +294,11 @@ void test_handle_recv_incomplete_request() {
 
 void test_handle_recv_one_request() {
     HMap kv_store;
-    MinHeap ttl_timers;
+    TimerManager timers;
     ThreadPool thread_pool(4);
     Conn conn(10, true, false, false);
 
-    conn.handle_recv_fn(kv_store, ttl_timers, thread_pool, recv_test_handle_recv_one_request, send_test_handle_recv_one_request);
+    conn.handle_recv_fn(kv_store, timers, thread_pool, recv_test_handle_recv_one_request, send_test_handle_recv_one_request);
 
     assert(conn.incoming.size() == 0);
     assert(conn.outgoing.size() == 0); // response sent
@@ -310,11 +310,11 @@ void test_handle_recv_one_request() {
 
 void test_handle_recv_multiple_requests() {
     HMap kv_store;
-    MinHeap ttl_timers;
+    TimerManager timers;
     ThreadPool thread_pool(4);
     Conn conn(10, true, false, false);
 
-    conn.handle_recv_fn(kv_store, ttl_timers, thread_pool, recv_test_handle_recv_multiple_requests, send_test_handle_recv_multiple_requests);
+    conn.handle_recv_fn(kv_store, timers, thread_pool, recv_test_handle_recv_multiple_requests, send_test_handle_recv_multiple_requests);
 
     assert(conn.incoming.size() == 0);
     assert(conn.outgoing.size() == 0); // responses sent

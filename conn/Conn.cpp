@@ -37,16 +37,16 @@ bool Conn::send_data(ssize_t (*send)(int fd, const void *buf, size_t n, int flag
     return true;
 }
 
-void Conn::handle_recv(HMap &kv_store, MinHeap &ttl_timers, ThreadPool &thread_pool) {
-    handle_recv_fn(kv_store, ttl_timers, thread_pool, recv, send);
+void Conn::handle_recv(HMap &kv_store, TimerManager &timers, ThreadPool &thread_pool) {
+    handle_recv_fn(kv_store, timers, thread_pool, recv, send);
 }
 
-void Conn::handle_recv_fn(HMap &kv_store, MinHeap &ttl_timers, ThreadPool &thread_pool, ssize_t (*recv)(int fd, void *buf, size_t n, int flags), ssize_t (*send)(int fd, const void *buf, size_t n, int flags)) {
+void Conn::handle_recv_fn(HMap &kv_store, TimerManager &timers, ThreadPool &thread_pool, ssize_t (*recv)(int fd, void *buf, size_t n, int flags), ssize_t (*send)(int fd, const void *buf, size_t n, int flags)) {
     if (!recv_data(recv)) {
         return;
     }
 
-    CommandExecutor cmd_executor(&kv_store, &ttl_timers, &thread_pool);
+    CommandExecutor cmd_executor(&kv_store, &timers, &thread_pool);
     while (Request *request = parse_request()) {
         log("connection %d request: %s", fd, request->to_string().data());
 
