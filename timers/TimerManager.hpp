@@ -16,10 +16,10 @@ class TTLTimer;
 class TimerManager {
     private:
         static const uint16_t MAX_TTL_EXPIRATIONS = 1000;
-    public:
+        
         Queue idle_timers; // can use a queue because idle timers have a fixed timeout value
         MinHeap ttl_timers;
-    
+    public:
         /**
          * Gets the time until the next timer expires.
          * 
@@ -57,4 +57,9 @@ class TimerManager {
 
         /* Removes a TTL timer from being managed by the TimerManager */
         void remove(TTLTimer *timer);
+
+    #ifdef TEST_MODE
+    public:      
+        Queue *get_idle_timers() { return &idle_timers; };
+    #endif
 };

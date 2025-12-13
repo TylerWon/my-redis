@@ -334,7 +334,7 @@ void test_handle_close() {
     conn.handle_close(fd_to_conn, &timers);
 
     assert(fd_to_conn[conn.fd] == NULL);
-    assert(timers.idle_timers.is_empty() == true);
+    assert(timers.get_idle_timers()->is_empty() == true);
 }
 
 int main() {

@@ -62,9 +62,8 @@ void TimerManager::process_timers(HMap &kv_store, std::vector<Conn *> &fd_to_con
         conn->handle_close(fd_to_conn, this);
     }
 
-    const uint32_t MAX_EXPIRATIONS = 1000;
     uint32_t count = 0;
-    while (!ttl_timers.is_empty() && count < MAX_EXPIRATIONS) {
+    while (!ttl_timers.is_empty() && count < MAX_TTL_EXPIRATIONS) {
         MHNode *node = ttl_timers.min();
         TTLTimer *timer = container_of(node, TTLTimer, node);
         if (timer->expiry_time_ms > now_ms) {
