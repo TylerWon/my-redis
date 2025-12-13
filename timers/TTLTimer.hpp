@@ -11,9 +11,9 @@
  * Once the expiry time is exceeded, the entry associated with the timer has expired and should be removed.
  */ 
 class TTLTimer {
-    private:
-        static const int8_t UNSET = -1;
     public:
+        static const int8_t UNSET = -1;
+
         time_t expiry_time_ms = UNSET;
         MHNode node;
 
@@ -36,3 +36,14 @@ class TTLTimer {
         /* Checks if the timer's expiry is set */
         bool is_expiry_set();
 };
+
+/**
+ * Callback which checks if one TTLTimer is less than another in a MinHeap.
+ * 
+ * @param node1 The MHNode contained by the first TTLTimer.
+ * @param node2 The MHNode contained by the second TTLTimer.
+ * 
+ * @return  True if the first TTLTimer is less than the second TTLTimer.
+ *          False otherwise.
+ */
+bool is_ttl_timer_less(MHNode *node1, MHNode *node2);

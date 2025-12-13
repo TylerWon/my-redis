@@ -61,5 +61,6 @@ class TimerManager {
     #ifdef TEST_MODE
     public:      
         Queue *get_idle_timers() { return &idle_timers; };
+        MinHeap *get_ttl_timers() { return &ttl_timers; }; 
     #endif
 };
